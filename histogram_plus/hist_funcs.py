@@ -9,12 +9,11 @@ from astroML.density_estimation import\
     scotts_bin_width, freedman_bin_width,\
     knuth_bin_width
 
-#from bb_poly import bayesian_blocks
-from bayesian_blocks_modified import bayesian_blocks
-#from fill_between_steps import fill_between_steps
+from bb.tools.bayesian_blocks_modified import bayesian_blocks
 
 
-def hist(x, bins=10, fitness='events', gamma=None, p0=0.05, errorbars=None, suppress_zero=False, *args, **kwargs):
+def hist(x, bins=10, fitness='events', gamma=None, p0=0.05, errorbars=None, suppress_zero=False,
+         *args, **kwargs):
     """Enhanced histogram, based on `hist` function from astroML.
 
     This is a histogram function that enables the use of more sophisticated
