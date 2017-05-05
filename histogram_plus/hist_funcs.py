@@ -2,7 +2,6 @@ from __future__ import division
 import warnings
 from numbers import Number
 import numpy as np
-import matplotlib
 from matplotlib import pyplot as plt
 
 from astroML.density_estimation import\
@@ -92,15 +91,6 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
             bin_dict['p0'] = kwargs.pop('p0')
 
 
-    # For scaling
-    if 'scale' in kwargs:
-        scale = kwargs.pop('scale')
-    else:
-        scale = None
-    if scale and "stacked" in kwargs:
-        warnings.warn("scaling is not currently supported for stacked histograms: scaling will be ignored.")
-        scale = None
-
     # For marker-style
     if 'histtype' in kwargs and kwargs['histtype'] == 'marker':
         marker = kwargs.pop('histtype')
@@ -136,6 +126,7 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     else:
         bc, be, vis_object, err_scale = _do_std_hist(x, bins, bin_range, scale, ax, **kwargs)
 
+    '''
     else:
 
         # if normed:
@@ -244,6 +235,7 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     except:
         bc = bin_content
     return bc, bins, vis_objects
+    '''
 
 def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
     '''Private function for making a marker-based histogram
@@ -355,50 +347,55 @@ def _do_std_hist(x, bins, bin_range, scale, ax, **kwargs):
     err_scale = 1
 
     if not normed and not scale:
+        print 1
         # Not normalized or scaled, process is straightforward.
         bin_content, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
 
     elif normed and not scale:
+        print 2
         # Just normalized: calculate both the normed and default hist (ratio is needed for proper
         # error bar calculation
-        bin_content, bin_edges = ax.hist(x, bins, density=True, range=bin_range, **kwargs)
+        bin_content, bin_edges, patches = ax.hist(x, bins, normed=True, range=bin_range, **kwargs)
         bin_content_no_norm, _ = np.histogram(x, bins, density=False, range=bin_range)
         err_scale = bin_content/bin_content_no_norm
 
     elif not normed and isinstance(scale, Number):
+        print 3
         # Just scaled with a single number
-        bin_content_no_scale, bin_edges = np.histogram(x, bins, range=bin_range)
+        bin_content_no_scale, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
         bin_content = bin_content_no_scale * scale
         err_scale = scale
+        _redraw_hist(bin_content, patches, histtype, ax)
 
     elif not normed and scale=='binwidth':
+        print 4
         # Each bin should be divided by its bin width
-        bin_content_no_scale, bin_edges = np.histogram(x, bins, range=bin_range)
-        bin_content_no_scale = np.asarray(bin_content_no_scale, dtype=float)
+        bin_content_no_scale, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
         bin_content = np.ones(bin_content_no_scale.shape)
         err_scale = np.ones(bin_content_no_scale.shape)
         widths = bin_edges[1:] - bin_edges[:-1]
         for i, bc in enumerate(bin_content_no_scale):
             bin_content[i] = (bc/widths[i])
             err_scale[i] = (1.0/widths[i])
+        _redraw_hist(bin_content, patches, histtype, ax)
 
     elif normed and isinstance(scale, Number):
+        print 5
         # Normed and scaled (with a number): Assume the user is not mistakenly using both options
         # (but this will throw a warning).  First normalize, then scale (otherwise the scale would
         # be irrelevent
-        bin_content_norm, bin_edges = np.histogram(x, bins, density=True, range=bin_range)
-        bin_content_norm = np.asarray(bin_content_norm, dtype=float)
+        bin_content_norm, bin_edges, patches = ax.hist(x, bins, normed=True, range=bin_range, **kwargs)
         bin_content_no_norm, _ = np.histogram(x, bins, density=False, range=bin_range)
-        bin_content_no_norm = np.asarray(bin_content_no_norm)
         bin_content = bin_content_norm*scale
         err_scale = (bin_content_norm/bin_content_no_norm)*scale
+        _redraw_hist(bin_content, patches, histtype, ax)
 
     elif normed and scale=='binwidth':
+        print 6
         # Normed and scaled (by binwidth): Assume the user is not mistakenly using both options
         # (but this will throw a warning).  First scale by binwidth, then normalize (this is the
         # reverse order when scaling by a single number)
-        bin_content_no_scale, bin_edges = np.histogram(x, bins, range=bin_range)
-        bin_content_no_scale = np.asarray(bin_content_no_scale, dtype=float)
+        bin_content_no_scale, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
         bin_content_scale = np.ones(bin_content_no_scale.shape)
         err_scale = np.ones(bin_content_no_scale.shape)
         widths = bin_edges[1:] - bin_edges[:-1]
@@ -408,25 +405,29 @@ def _do_std_hist(x, bins, bin_range, scale, ax, **kwargs):
         total_content = np.sum(bin_content_scale*widths)
         bin_content = bin_content_scale/total_content
         err_scale /= total_content
+        _redraw_hist(bin_content, patches, histtype, ax)
 
 
-    widths = bin_edges[1:] - bin_edges[:-1]
-    bin_centers = bin_edges[:-1]+widths*0.5
-    # bin_error = np.sqrt(bin_content)
-    # err_low = np.asarray([poisson_error(bc, suppress_zero)[0] for bc in bin_content_raw])
-    # err_hi = np.asarray([poisson_error(bc, suppress_zero)[1] for bc in bin_content_raw])
-    # err_scale = bin_content/bin_content_raw
-    # err_low *= err_scale
-    # err_hi *= err_scale
-    # bin_error = [err_low, err_hi]
-    # if errorbars:
-    #     vis_objects_err = ax.errorbar(bin_centers, bin_content, linestyle=linestyle,
-    #                                   marker=markerstyle, yerr=bin_error, **kwargs)
-    vis_object = ax.plot(bin_centers, bin_content, linestyle=linestyle, marker=markerstyle,
-                         **kwargs)
-    #if 'color' in kwargs:
-    #    kwargs.pop('color')
-    return bin_content, bin_edges, err_scale, vis_object
+    return bin_content, bin_edges, err_scale, patches
+
+
+def _redraw_hist(bin_content, patches, histtype, ax):
+    if histtype == 'bar':
+        for i, bc in enumerate(bin_content):
+            plt.setp(patches[i], 'height', bc)
+    elif histtype == 'stepfilled' or histtype == 'step':
+        xy = patches[0].get_xy()
+        j = 0
+        for i, bc in enumerate(bin_content):
+            xy[j+1,1] = bc
+            xy[j+2,1] = bc
+            j+=2
+        plt.setp(patches[0], 'xy', xy)
+
+    ax.relim()
+    ax.autoscale_view(False,False,True)
+
+
 
 
 def poisson_error(bin_content, suppress_zero=False):
