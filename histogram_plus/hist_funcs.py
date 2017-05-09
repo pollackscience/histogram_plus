@@ -62,11 +62,10 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     else:
         ax = plt.gca()
 
-
     # Group arguments into different dicts
     # For error bars:
     err_dict = {}
-    if not isinstance(errorbars, bool) or errorbars is not False:
+    if not (errorbars is None or errorbars is False):
         err_dict['errorbars'] = errorbars
         if 'errtype' in kwargs:
             err_dict['errtype'] = kwargs.pop('errtype')
@@ -77,19 +76,18 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
         else:
             err_dict['suppress_zero'] = True
 
-
     # For data-driven binning
     bin_dict = {}
     if isinstance(bins, str):
         bin_dict['bins'] = bins
         if "weights" in kwargs:
-            warnings.warn("weights argument is not supported for this binning method: it will be ignored.")
+            warnings.warn(
+                "weights argument is not supported for this binning method: it will be ignored.")
             kwargs.pop('weights')
         if 'fitness' in kwargs:
             bin_dict['fitness'] = kwargs.pop('fitness')
         if 'p0' in kwargs:
             bin_dict['p0'] = kwargs.pop('p0')
-
 
     # For marker-style
     if 'histtype' in kwargs and kwargs['histtype'] == 'marker':
@@ -105,7 +103,7 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
             x = x[(x >= bin_range[0]) & (x <= bin_range[1])]
 
         # Do binning
-        if bins in ['block','blocks']:
+        if bins in ['block', 'blocks']:
             bins = bayesian_blocks(t=x, fitness='events', p0=0.02)
         elif bins in ['knuth', 'knuths']:
             dx, bins = knuth_bin_width(x, True, disp=False)
@@ -119,12 +117,14 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     # Generate histogram-like object.
     # There are various possible cases that need to be considered separately.
 
-    vis_objects = None
-    vis_objects_err = None
     if marker:
-        bc, be, vis_object, err_scale = _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs)
+        bc, be, err_scale, vis_object = _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs)
     else:
-        bc, be, vis_object, err_scale = _do_std_hist(x, bins, bin_range, scale, ax, **kwargs)
+        bc, be, err_scale, vis_object = _do_std_hist(x, bins, bin_range, scale, ax, **kwargs)
+
+    if len(err_dict) > 0:
+        err_dict['marker'] = marker
+        _do_err_bars(bc, be, err_scale, ax, **err_dict)
 
     '''
     else:
@@ -237,6 +237,7 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     return bc, bins, vis_objects
     '''
 
+
 def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
     '''Private function for making a marker-based histogram
     (typically used to represent actual data)'''
@@ -256,34 +257,33 @@ def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
 
     # Break into scaling cases
 
-    err_scale = 1
-
     if not normed and not scale:
         # Not normalized or scaled, process is straightforward.
         bin_content, bin_edges = np.histogram(x, bins, range=bin_range)
+        bin_err = np.sqrt(bin_content)
 
     elif normed and not scale:
         # Just normalized: calculate both the normed and default hist (ratio is needed for proper
         # error bar calculation
         bin_content, bin_edges = np.histogram(x, bins, density=True, range=bin_range)
         bin_content_no_norm, _ = np.histogram(x, bins, density=False, range=bin_range)
-        err_scale = bin_content/bin_content_no_norm
+        bin_err = np.sqrt(bin_content_no_norm)*(bin_content/bin_content_no_norm)
 
     elif not normed and isinstance(scale, Number):
         # Just scaled with a single number
         bin_content_no_scale, bin_edges = np.histogram(x, bins, range=bin_range)
         bin_content = bin_content_no_scale * scale
-        err_scale = scale
+        bin_err = np.sqrt(bin_content_no_scale)*scale
 
-    elif not normed and scale=='binwidth':
+    elif not normed and scale == 'binwidth':
         # Each bin should be divided by its bin width
         bin_content_no_scale, bin_edges = np.histogram(x, bins, range=bin_range)
         bin_content = np.ones(bin_content_no_scale.shape)
-        err_scale = np.ones(bin_content_no_scale.shape)
+        bin_err = np.sqrt(bin_content_no_scale)
         widths = bin_edges[1:] - bin_edges[:-1]
         for i, bc in enumerate(bin_content_no_scale):
             bin_content[i] = (bc/widths[i])
-            err_scale[i] = (1.0/widths[i])
+            bin_err[i] /= widths[i]
 
     elif normed and isinstance(scale, Number):
         # Normed and scaled (with a number): Assume the user is not mistakenly using both options
@@ -292,23 +292,22 @@ def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
         bin_content_norm, bin_edges = np.histogram(x, bins, density=True, range=bin_range)
         bin_content_no_norm, _ = np.histogram(x, bins, density=False, range=bin_range)
         bin_content = bin_content_norm*scale
-        err_scale = (bin_content_norm/bin_content_no_norm)*scale
+        bin_err = np.sqrt(bin_content_no_norm)*(bin_content_norm/bin_content_no_norm)*scale
 
-    elif normed and scale=='binwidth':
+    elif normed and scale == 'binwidth':
         # Normed and scaled (by binwidth): Assume the user is not mistakenly using both options
         # (but this will throw a warning).  First scale by binwidth, then normalize (this is the
         # reverse order when scaling by a single number)
         bin_content_no_scale, bin_edges = np.histogram(x, bins, range=bin_range)
         bin_content_scale = np.ones(bin_content_no_scale.shape)
-        err_scale = np.ones(bin_content_no_scale.shape)
+        bin_err = np.sqrt(bin_content_no_scale)
         widths = bin_edges[1:] - bin_edges[:-1]
         for i, bc in enumerate(bin_content_no_scale):
             bin_content_scale[i] = (bc/widths[i])
-            err_scale[i] = (1.0/widths[i])
+            bin_err[i] /= widths[i]
         total_content = np.sum(bin_content_scale*widths)
         bin_content = bin_content_scale/total_content
-        err_scale /= total_content
-
+        bin_err /= total_content
 
     widths = bin_edges[1:] - bin_edges[:-1]
     bin_centers = bin_edges[:-1]+widths*0.5
@@ -324,9 +323,9 @@ def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
     #                                   marker=markerstyle, yerr=bin_error, **kwargs)
     vis_object = ax.plot(bin_centers, bin_content, linestyle=linestyle, marker=markerstyle,
                          **kwargs)
-    #if 'color' in kwargs:
-    #    kwargs.pop('color')
-    return bin_content, bin_edges, err_scale, vis_object
+    # if 'color' in kwargs:
+    #     kwargs.pop('color')
+    return bin_content, bin_edges, bin_err, vis_object
 
 
 def _do_std_hist(x, bins, bin_range, scale, ax, **kwargs):
@@ -344,71 +343,76 @@ def _do_std_hist(x, bins, bin_range, scale, ax, **kwargs):
 
     # Break into scaling cases
 
-    err_scale = 1
-
     if not normed and not scale:
-        print 1
         # Not normalized or scaled, process is straightforward.
         bin_content, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
+        bin_err = np.sqrt(bin_content)
 
     elif normed and not scale:
-        print 2
         # Just normalized: calculate both the normed and default hist (ratio is needed for proper
         # error bar calculation
         bin_content, bin_edges, patches = ax.hist(x, bins, normed=True, range=bin_range, **kwargs)
         bin_content_no_norm, _ = np.histogram(x, bins, density=False, range=bin_range)
-        err_scale = bin_content/bin_content_no_norm
+        bin_err = np.sqrt(bin_content_no_norm)*(bin_content/bin_content_no_norm)
 
     elif not normed and isinstance(scale, Number):
-        print 3
         # Just scaled with a single number
         bin_content_no_scale, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
         bin_content = bin_content_no_scale * scale
-        err_scale = scale
+        bin_err = np.sqrt(bin_content_no_scale)*scale
         _redraw_hist(bin_content, patches, histtype, ax)
 
-    elif not normed and scale=='binwidth':
-        print 4
+    elif not normed and scale == 'binwidth':
         # Each bin should be divided by its bin width
         bin_content_no_scale, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
         bin_content = np.ones(bin_content_no_scale.shape)
-        err_scale = np.ones(bin_content_no_scale.shape)
+        bin_err = np.sqrt(bin_content_no_scale)
         widths = bin_edges[1:] - bin_edges[:-1]
         for i, bc in enumerate(bin_content_no_scale):
             bin_content[i] = (bc/widths[i])
-            err_scale[i] = (1.0/widths[i])
+            bin_err[i] /= widths[i]
         _redraw_hist(bin_content, patches, histtype, ax)
 
     elif normed and isinstance(scale, Number):
-        print 5
         # Normed and scaled (with a number): Assume the user is not mistakenly using both options
         # (but this will throw a warning).  First normalize, then scale (otherwise the scale would
         # be irrelevent
-        bin_content_norm, bin_edges, patches = ax.hist(x, bins, normed=True, range=bin_range, **kwargs)
+        bin_content_norm, bin_edges, patches = ax.hist(x, bins, normed=True, range=bin_range,
+                                                       **kwargs)
         bin_content_no_norm, _ = np.histogram(x, bins, density=False, range=bin_range)
         bin_content = bin_content_norm*scale
-        err_scale = (bin_content_norm/bin_content_no_norm)*scale
+        bin_err = np.sqrt(bin_content_no_norm)*(bin_content_norm/bin_content_no_norm)*scale
         _redraw_hist(bin_content, patches, histtype, ax)
 
-    elif normed and scale=='binwidth':
-        print 6
+    elif normed and scale == 'binwidth':
         # Normed and scaled (by binwidth): Assume the user is not mistakenly using both options
         # (but this will throw a warning).  First scale by binwidth, then normalize (this is the
         # reverse order when scaling by a single number)
         bin_content_no_scale, bin_edges, patches = ax.hist(x, bins, range=bin_range, **kwargs)
         bin_content_scale = np.ones(bin_content_no_scale.shape)
-        err_scale = np.ones(bin_content_no_scale.shape)
+        bin_err = np.sqrt(bin_content_no_scale)
         widths = bin_edges[1:] - bin_edges[:-1]
         for i, bc in enumerate(bin_content_no_scale):
             bin_content_scale[i] = (bc/widths[i])
-            err_scale[i] = (1.0/widths[i])
+            bin_err[i] /= widths[i]
         total_content = np.sum(bin_content_scale*widths)
         bin_content = bin_content_scale/total_content
-        err_scale /= total_content
+        bin_err /= total_content
         _redraw_hist(bin_content, patches, histtype, ax)
 
+    return bin_content, bin_edges, bin_err, patches
 
-    return bin_content, bin_edges, err_scale, patches
+
+def _do_err_bars(bin_height, bin_edges, bin_err, ax, **kwargs):
+    width = (bin_edges[1:]-bin_edges[:-1])
+    bin_centers = bin_edges[:-1]+width*0.5
+    # print bin_height, err_scale
+    if kwargs['marker']:
+        ax.errorbar(bin_centers, bin_height, linestyle='', marker='',
+                    yerr=bin_err, xerr=width*0.5, linewidth=2, color='k')
+    else:
+        ax.errorbar(bin_centers, bin_height, linestyle='', marker='',
+                    yerr=bin_err, linewidth=2, color='k')
 
 
 def _redraw_hist(bin_content, patches, histtype, ax):
@@ -419,15 +423,13 @@ def _redraw_hist(bin_content, patches, histtype, ax):
         xy = patches[0].get_xy()
         j = 0
         for i, bc in enumerate(bin_content):
-            xy[j+1,1] = bc
-            xy[j+2,1] = bc
-            j+=2
+            xy[j+1, 1] = bc
+            xy[j+2, 1] = bc
+            j += 2
         plt.setp(patches[0], 'xy', xy)
 
     ax.relim()
-    ax.autoscale_view(False,False,True)
-
-
+    ax.autoscale_view(False, False, True)
 
 
 def poisson_error(bin_content, suppress_zero=False):
