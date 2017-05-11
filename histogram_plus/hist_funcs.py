@@ -1,8 +1,10 @@
 from __future__ import division
 import warnings
 from numbers import Number
+import colorsys
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import colors
 
 from astroML.density_estimation import\
     scotts_bin_width, freedman_bin_width,\
@@ -71,6 +73,10 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
             err_dict['errtype'] = kwargs.pop('errtype')
         else:
             err_dict['errtype'] = 'line'
+        if 'errcolor' in kwargs:
+            err_dict['errcolor'] = kwargs.pop('errcolor')
+        else:
+            err_dict['errcolor'] = 'inherit'
         if 'suppress_zero' in kwargs:
             err_dict['suppress_zero'] = kwargs.pop('suppress_zero')
         else:
@@ -89,11 +95,14 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
         if 'p0' in kwargs:
             bin_dict['p0'] = kwargs.pop('p0')
 
-    # For marker-style
-    if 'histtype' in kwargs and kwargs['histtype'] == 'marker':
-        marker = kwargs.pop('histtype')
+    # For marker-style and histtype
+    histtype = None
+    if 'histtype' in kwargs:
+        histtype = kwargs['histtype']
+        if histtype == 'marker':
+            kwargs.pop('histtype')  # Don't want to feed this arg to plt.plot
     else:
-        marker = None
+        kwargs['histtype'] = 'stepfilled'
 
     # Do any data-driven binning:
     if len(bin_dict) > 0:
@@ -111,20 +120,19 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
             dx, bins = scotts_bin_width(x, True)
         elif bins in ['freedman', 'freedmans']:
             dx, bins = freedman_bin_width(x, True)
-        elif isinstance(bins, str):
-            raise ValueError("unrecognized bin argument: '{}'".format(bins))
+        # else, fall through to other 'smart' binning built into np or mpl
 
     # Generate histogram-like object.
     # There are various possible cases that need to be considered separately.
 
-    if marker:
+    if histtype == 'marker':
         bc, be, err_scale, vis_object = _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs)
     else:
         bc, be, err_scale, vis_object = _do_std_hist(x, bins, bin_range, scale, ax, **kwargs)
 
     if len(err_dict) > 0:
-        err_dict['marker'] = marker
-        _do_err_bars(bc, be, err_scale, ax, **err_dict)
+        err_dict['histtype'] = histtype
+        _do_err_bars(bc, be, err_scale, ax, vis_object, **err_dict)
 
     '''
     else:
@@ -403,16 +411,28 @@ def _do_std_hist(x, bins, bin_range, scale, ax, **kwargs):
     return bin_content, bin_edges, bin_err, patches
 
 
-def _do_err_bars(bin_height, bin_edges, bin_err, ax, **kwargs):
+def _do_err_bars(bin_height, bin_edges, bin_err, ax, vis_object, **kwargs):
     width = (bin_edges[1:]-bin_edges[:-1])
     bin_centers = bin_edges[:-1]+width*0.5
     # print bin_height, err_scale
-    if kwargs['marker']:
+    if kwargs['errcolor'] == 'inherit':
+        if kwargs['histtype'] == 'marker':
+            err_color = colors.to_rgba(vis_object[0].get_color())
+        elif kwargs['histtype'] in ['stepfilled', 'bar']:
+            err_color = colors.to_rgba(vis_object[0].get_facecolor())
+        elif kwargs['histtype'] == 'step':
+            err_color = colors.to_rgba(vis_object[0].get_edgecolor())
+
+        hls_tmp = colorsys.rgb_to_hls(*err_color[:-1])
+        err_color = list(colorsys.hls_to_rgb(hls_tmp[0], hls_tmp[1]*0.7, hls_tmp[2])) + \
+            [err_color[-1]]
+
+    if kwargs['histtype'] == 'marker':
         ax.errorbar(bin_centers, bin_height, linestyle='', marker='',
-                    yerr=bin_err, xerr=width*0.5, linewidth=2, color='k')
+                    yerr=bin_err, xerr=width*0.5, linewidth=2, color=err_color)
     else:
         ax.errorbar(bin_centers, bin_height, linestyle='', marker='',
-                    yerr=bin_err, linewidth=2, color='k')
+                    yerr=bin_err, linewidth=2, color=err_color)
 
 
 def _redraw_hist(bin_content, patches, histtype, ax):
