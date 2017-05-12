@@ -5,6 +5,7 @@ import colorsys
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import colors
+import matplotlib.cbook as cbook
 
 from astroML.density_estimation import\
     scotts_bin_width, freedman_bin_width,\
@@ -52,7 +53,32 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
         Other keyword arguments are described in `pylab.hist()`.
     """
 
-    x = np.asarray(x)
+    # Manage the input data in the same fashion as mpl
+
+    if np.isscalar(x):
+        x = [x]
+
+    input_empty = (np.size(x) == 0)
+
+    # Massage 'x' for processing.
+    if input_empty:
+        x = np.array([[]])
+    else:
+        x = cbook._reshape_2D(x)
+    nx = len(x)  # number of datasets
+    # We need to do to 'weights' what was done to 'x'
+
+    if 'weights' in kwargs and kwargs['weights'] is not None:
+        w = cbook._reshape_2D(kwargs['weights'])
+    else:
+        w = [None]*nx
+
+    if len(w) != nx:
+        raise ValueError('weights should have the same shape as x')
+
+    for xi, wi in zip(x, w):
+        if wi is not None and len(wi) != len(xi):
+            raise ValueError('weights should have the same shape as x')
 
     # Prevent hiding of builtins
     bin_range = range
@@ -133,117 +159,6 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     if len(err_dict) > 0:
         err_dict['histtype'] = histtype
         _do_err_bars(bc, be, err_scale, ax, vis_object, **err_dict)
-
-    '''
-    else:
-
-        # if normed:
-        #     bin_content_raw, _ = np.histogram(x, bins, density=False, range=hrange)
-        #     bin_content_raw = np.asarray(bin_content_raw)
-        # else:
-        #     bin_content_raw = bin_content
-
-        # err_low = np.asarray([poisson_error(bc, suppress_zero)[0] for bc in bin_content_raw])
-        # err_hi = np.asarray([poisson_error(bc, suppress_zero)[1] for bc in bin_content_raw])
-        # err_scale = bin_content/bin_content_raw
-        # err_low *= err_scale
-        # err_hi *= err_scale
-        # bin_error = [err_low, err_hi]
-        # width = (bins[1:]-bins[:-1])
-        # bin_centers = bins[:-1]+width*0.5
-        # vis_color = vis_objects[0].get_facecolor()
-        # if 'histtype' in kwargs:
-        #     if kwargs['histtype'] == 'step':
-        #         vis_color = vis_objects[0].get_edgecolor()
-        #     kwargs.pop('histtype')
-        # if 'weights' in kwargs:
-        #     kwargs.pop('weights')
-        # if 'label' in kwargs:
-        #     kwargs.pop('label')
-        # if 'linewidth' in kwargs:
-        #     kwargs.pop('linewidth')
-        # if errorbars:
-        #     vis_objects_err = ax.errorbar(bin_centers, bin_content, linestyle='', marker='.',
-        #                                   yerr=bin_error, linewidth=2,
-        #                                   color=vis_color, **kwargs)
-
-# perform any scaling if necessary, including redrawing of the scaled objects
-    if scale:
-        bin_content_scaled = []
-        if vis_objects is not None:
-            if isinstance(vis_objects[0], matplotlib.patches.Rectangle):
-                if scale == 'binwidth':
-                    for i, bc in enumerate(bin_content):
-                        width = (bins[i+1]-bins[i])
-                        bin_content_scaled.append(bin_content[i]/width)
-                        plt.setp(vis_objects[i], 'height', vis_objects[i].get_height()/width)
-                elif isinstance(scale, Number):
-                    for i, bc in enumerate(bin_content):
-                        bin_content_scaled.append(bin_content[i]*scale)
-                        plt.setp(vis_objects[i], 'height', vis_objects[i].get_height()*scale)
-                else:
-                    warnings.warn("scale argument value `", scale, "` not supported: it will be ignored.")
-
-            elif isinstance(vis_objects[0], matplotlib.patches.Polygon):
-                xy = vis_objects[0].get_xy()
-                j = 0
-                if scale == 'binwidth':
-                    for i, bc in enumerate(bin_content):
-                        width = (bins[i+1]-bins[i])
-                        bin_content_scaled.append(bin_content[i]/width)
-                        xy[j+1,1] = bin_content_scaled[i]
-                        xy[j+2,1] = bin_content_scaled[i]
-                        j+=2
-                elif isinstance(scale, Number):
-                    for i, bc in enumerate(bin_content):
-                        bin_content_scaled.append(bin_content[i]*scale)
-                        xy[j+1,1] = bin_content_scaled[i]
-                        xy[j+2,1] = bin_content_scaled[i]
-                        j+=2
-                else:
-                    warnings.warn("scale argument value `", scale, "` not supported: it will be ignored.")
-                plt.setp(vis_objects[0], 'xy', xy)
-
-        if vis_objects_err is not None:
-            if scale == 'binwidth':
-                for i, bc in enumerate(bin_content):
-                    width = (bins[i+1]-bins[i])
-                    if len(bin_content_scaled) != len(bin_content):
-                        bin_content_scaled.append(bin_content[i]/width)
-                    bin_error[0][i] /= width
-                    bin_error[1][i] /= width
-            elif isinstance(scale, Number):
-                for i, bc in enumerate(bin_content):
-                    if len(bin_content_scaled) != len(bin_content):
-                        bin_content_scaled.append(bin_content[i]*scale)
-                    bin_error[0][i] *= scale
-                    bin_error[1][i] *= scale
-            else:
-                warnings.warn("scale argument value `", scale, "` not supported: it will be ignored.")
-            bin_content_scaled = np.asarray(bin_content_scaled)
-            vis_objects_err[0].set_ydata(bin_content_scaled)
-
-            vis_objects_err[1][0].set_ydata(bin_content_scaled-bin_error[0])
-            vis_objects_err[1][1].set_ydata(bin_content_scaled+bin_error[1])
-            #vis_objects_err[1][0].set_ydata(bin_error[0])
-            #vis_objects_err[1][1].set_ydata(bin_error[1])
-            tmplines = vis_objects_err[2][0].get_segments()
-            for i, bc in enumerate(bin_content_scaled):
-                tmplines[i][0][1] = bin_content_scaled[i]-bin_error[0][i]
-                tmplines[i][1][1] = bin_content_scaled[i]+bin_error[1][i]
-                #tmplines[i][0][1] = bin_error[0][i]
-                #tmplines[i][1][1] = bin_error[1][i]
-            vis_objects_err[2][0].set_segments(tmplines)
-
-        ax.relim()
-        ax.autoscale_view(False,False,True)
-
-    try:
-        bc = bin_content_scaled
-    except:
-        bc = bin_content
-    return bc, bins, vis_objects
-    '''
 
 
 def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
@@ -426,6 +341,8 @@ def _do_err_bars(bin_height, bin_edges, bin_err, ax, vis_object, **kwargs):
         hls_tmp = colorsys.rgb_to_hls(*err_color[:-1])
         err_color = list(colorsys.hls_to_rgb(hls_tmp[0], hls_tmp[1]*0.7, hls_tmp[2])) + \
             [err_color[-1]]
+    else:
+        err_color = kwargs['errcolor']
 
     if kwargs['histtype'] == 'marker':
         ax.errorbar(bin_centers, bin_height, linestyle='', marker='',
