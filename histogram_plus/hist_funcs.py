@@ -1,11 +1,13 @@
 from __future__ import division
-import warnings
+# import warnings
 from numbers import Number
+from collections import Iterable
 import colorsys
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import colors
 import matplotlib.cbook as cbook
+import pandas as pd
 
 from astroML.density_estimation import\
     scotts_bin_width, freedman_bin_width,\
@@ -51,6 +53,10 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
                 If this method is chosen, all additional kwargs for `pylab.plot()` can be used.
 
         Other keyword arguments are described in `pylab.hist()`.
+
+
+
+    Brian Pollack, 2017
     """
 
     # Manage the input data in the same fashion as mpl
@@ -80,9 +86,32 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
         if wi is not None and len(wi) != len(xi):
             raise ValueError('weights should have the same shape as x')
 
-    # Prevent hiding of builtins
+    # Prevent hiding of builtins, get important args from kwargs
     bin_range = range
     del range
+
+    histtype = None
+    if 'histtype' in kwargs:
+        histtype = kwargs['histtype']
+        if histtype == 'marker':
+            kwargs.pop('histtype')  # Don't want to feed this arg to plt.plot
+    else:
+        kwargs['histtype'] = 'stepfilled'
+
+    if 'stacked' in kwargs:
+        stacked = kwargs['stacked']
+        if histtype == 'marker' and stacked:
+            raise ValueError('Do not stack with markers, that would be silly')
+    else:
+        stacked = False
+
+    if histtype == 'barstacked' and not stacked:
+        stacked = True
+
+    # if 'normed' in kwargs:
+    #     normed = kwargs['normed']
+    # else:
+    #     normed = False
 
     # Get current axis
     if 'ax' in kwargs:
@@ -113,52 +142,29 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     if isinstance(bins, str):
         bin_dict['bins'] = bins
         if "weights" in kwargs:
-            warnings.warn(
-                "weights argument is not supported for this binning method: it will be ignored.")
-            kwargs.pop('weights')
+            raise TypeError('Weights are not supported for data-driven binning methods')
+            # warnings.warn(
+            #     "weights argument is not supported for this binning method: it will be ignored.")
+            # kwargs.pop('weights')
         if 'fitness' in kwargs:
             bin_dict['fitness'] = kwargs.pop('fitness')
         if 'p0' in kwargs:
             bin_dict['p0'] = kwargs.pop('p0')
 
-    # For marker-style and histtype
-    histtype = None
-    if 'histtype' in kwargs:
-        histtype = kwargs['histtype']
-        if histtype == 'marker':
-            kwargs.pop('histtype')  # Don't want to feed this arg to plt.plot
-    else:
-        kwargs['histtype'] = 'stepfilled'
-
-    # Do any data-driven binning:
-    if len(bin_dict) > 0:
-        # if range is specified with a data-driven binning method, we need to truncate the data for
-        # the bin-finding routines
-        if (bin_range and len(bin_dict) > 0):
-            x = x[(x >= bin_range[0]) & (x <= bin_range[1])]
-
-        # Do binning
-        if bins in ['block', 'blocks']:
-            bins = bayesian_blocks(t=x, fitness='events', p0=0.02)
-        elif bins in ['knuth', 'knuths']:
-            dx, bins = knuth_bin_width(x, True, disp=False)
-        elif bins in ['scott', 'scotts']:
-            dx, bins = scotts_bin_width(x, True)
-        elif bins in ['freedman', 'freedmans']:
-            dx, bins = freedman_bin_width(x, True)
-        # else, fall through to other 'smart' binning built into np or mpl
-
+    df_list, bin_edges, bin_range = _get_initial_vars(x, bins, bin_range, nx, w, stacked, bin_dict)
     # Generate histogram-like object.
     # There are various possible cases that need to be considered separately.
 
     if histtype == 'marker':
-        bc, be, err_scale, vis_object = _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs)
+        bc, err_scale, vis_object = _do_marker_hist(x, bin_edges, bin_range, scale, ax, **kwargs)
     else:
-        bc, be, err_scale, vis_object = _do_std_hist(x, bins, bin_range, scale, ax, **kwargs)
+        bc, err_scale, vis_object = _do_std_hist(x, bin_edges, bin_range, scale, ax, **kwargs)
 
     if len(err_dict) > 0:
         err_dict['histtype'] = histtype
-        _do_err_bars(bc, be, err_scale, ax, vis_object, **err_dict)
+        _do_err_bars(bc, bin_edges, err_scale, ax, vis_object, **err_dict)
+
+    return bc, bin_edges, vis_object
 
 
 def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
@@ -248,7 +254,7 @@ def _do_marker_hist(x, bins, bin_range, scale, ax, **kwargs):
                          **kwargs)
     # if 'color' in kwargs:
     #     kwargs.pop('color')
-    return bin_content, bin_edges, bin_err, vis_object
+    return bin_content, bin_err, vis_object
 
 
 def _do_std_hist(x, bins, bin_range, scale, ax, **kwargs):
@@ -323,7 +329,65 @@ def _do_std_hist(x, bins, bin_range, scale, ax, **kwargs):
         bin_err /= total_content
         _redraw_hist(bin_content, patches, histtype, ax)
 
-    return bin_content, bin_edges, bin_err, patches
+    return bin_content, bin_err, patches
+
+
+def _get_initial_vars(data, bins, bin_range, n_data_sets, weights, stacked, bin_dict):
+    '''Do an initial binning to get bin edges, total hist range, and break each set of data and
+    weights into a dataframe (easier to handle errorbar calculation moving forward)'''
+
+    # If bin edges are already determined, than skip initial histogramming
+    if isinstance(bins, Iterable) and not isinstance(bins, str):
+        bin_edges = bins
+        if bin_range is None:
+            bin_range = (bin_edges[0], bin_edges[-1])
+
+    # If bin edges need to be determined, there's a few different cases to consider
+    else:
+        if bin_range is None:
+            xmin = np.inf
+            xmax = -np.inf
+            for i in xrange(n_data_sets):
+                if len(data[i]) > 0:
+                    xmin = min(xmin, data[i].min())
+                    xmax = max(xmax, data[i].max())
+            bin_range = (xmin, xmax)
+
+        # Special case for Bayesian Blocks
+        if bins in ['block', 'blocks']:
+            if n_data_sets == 1:
+                bin_edges = bayesian_blocks(t=data, fitness='events', p0=0.02)
+            # Stacked data sets
+            elif stacked:
+                bin_edges = bayesian_blocks(t=data.ravel(), fitness='events', p0=0.02)
+            # Unstacked data
+            else:
+                bin_edges = []
+                for i in xrange(n_data_sets):
+                    bin_edges.append(bayesian_blocks(t=data[i], fitness='events', p0=0.02))
+                bin_edges = np.asarray(np.sort(np.concatenate(bin_edges)))
+
+        else:
+            # Just a single data set
+            if n_data_sets == 1:
+                _, bin_edges = np.histogram(data, bins=bins, weights=weights, range=bin_range)
+            # Stacked data sets
+            elif stacked:
+                _, bin_edges = np.histogram(data.ravel(), bins=bins, weights=weights.ravel(),
+                                            range=bin_range)
+            # Unstacked data
+            else:
+                _, bin_edges = np.histogram(data, bins=bins, weights=weights, range=bin_range)
+
+    # Now put the data into dataframes with the weights and bins
+    df_list = []
+    for i in xrange(n_data_sets):
+        df = pd.DataFrame({'data': data[i], 'weights': weights[i]})
+        df_bins = pd.cut(df.data, bin_edges, include_lowest=True)
+        df['bins'] = df_bins
+        df_list.append(df)
+
+    return df_list, bin_edges, bin_range
 
 
 def _do_err_bars(bin_height, bin_edges, bin_err, ax, vis_object, **kwargs):
