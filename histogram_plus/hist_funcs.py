@@ -163,7 +163,7 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
 
     if len(err_dict) > 0:
         err_dict['histtype'] = histtype
-        _do_err_bars(bc, bin_edges, err_scale, ax, vis_object, **err_dict)
+        _do_err_bars(bc, bin_edges, err_scale, nx, ax, vis_object, **err_dict)
 
     return bc, bin_edges, vis_object
 
@@ -235,8 +235,8 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
             bin_content_no_scale, bin_edges, vis_object = ax.hist(data, bin_edges, range=bin_range,
                                                                   **kwargs)
             redraw = True
-        bin_content = bin_content_no_scale * scale
-        bin_err = np.sqrt(bin_content_no_scale)*scale
+        bin_content = np.multiply(bin_content_no_scale, scale)
+        bin_err = np.multiply(np.sqrt(bin_content_no_scale), scale)
 
     elif not normed and scale == 'binwidth':
         # Each bin should be divided by its bin width
@@ -267,8 +267,9 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
                                                               **kwargs)
             redraw = True
         bin_content_no_norm, _ = np.histogram(data, bin_edges, density=False, range=bin_range)
-        bin_content = bin_content_norm*scale
-        bin_err = np.sqrt(bin_content_no_norm)*(bin_content_norm/bin_content_no_norm)*scale
+        bin_content = np.multiply(bin_content_norm, scale)
+        bin_err = np.multiply(np.sqrt(bin_content_no_norm),
+                              np.multiply(np.divide(bin_content_norm, bin_content_no_norm), scale))
 
     if do_marker:
         kwargs.pop('histtype')
@@ -277,7 +278,7 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
         vis_object = ax.plot(bin_centers, bin_content, linestyle=linestyle, marker=markerstyle,
                              **kwargs)
     elif redraw:
-        vis_object = _redraw_hist(bin_content, vis_object, histtype, ax)
+        vis_object = _redraw_hist(bin_content, vis_object, histtype, len(df_list), ax)
 
     return bin_content, bin_err, vis_object
 
@@ -348,44 +349,54 @@ def _get_initial_vars(data, bins, bin_range, n_data_sets, weights, stacked, bin_
     return df_list, bin_edges, bin_range
 
 
-def _do_err_bars(bin_height, bin_edges, bin_err, ax, vis_object, **kwargs):
+def _do_err_bars(bin_height, bin_edges, bin_err, n_data_sets, ax, vis_object, **kwargs):
     width = (bin_edges[1:]-bin_edges[:-1])
     bin_centers = bin_edges[:-1]+width*0.5
-    # print bin_height, err_scale
-    if kwargs['errcolor'] == 'inherit':
+    if n_data_sets == 1:
+        bin_height = [bin_height]
+        bin_err = [bin_err]
+        vis_object = [vis_object]
+
+    for i in range(n_data_sets):
+        if kwargs['errcolor'] == 'inherit':
+            if kwargs['histtype'] == 'marker':
+                err_color = colors.to_rgba(vis_object[i][0]._get_rgba_face())
+            elif kwargs['histtype'] in ['stepfilled', 'bar']:
+                err_color = colors.to_rgba(vis_object[i][0].get_facecolor())
+            elif kwargs['histtype'] == 'step':
+                err_color = colors.to_rgba(vis_object[i][0].get_edgecolor())
+
+            hls_tmp = colorsys.rgb_to_hls(*err_color[:-1])
+            err_color = list(colorsys.hls_to_rgb(hls_tmp[0], hls_tmp[1]*0.7, hls_tmp[2])) + \
+                [err_color[-1]]
+        else:
+            err_color = kwargs['errcolor']
+
         if kwargs['histtype'] == 'marker':
-            err_color = colors.to_rgba(vis_object[0]._get_rgba_face())
-        elif kwargs['histtype'] in ['stepfilled', 'bar']:
-            err_color = colors.to_rgba(vis_object[0].get_facecolor())
-        elif kwargs['histtype'] == 'step':
-            err_color = colors.to_rgba(vis_object[0].get_edgecolor())
-
-        hls_tmp = colorsys.rgb_to_hls(*err_color[:-1])
-        err_color = list(colorsys.hls_to_rgb(hls_tmp[0], hls_tmp[1]*0.7, hls_tmp[2])) + \
-            [err_color[-1]]
-    else:
-        err_color = kwargs['errcolor']
-
-    if kwargs['histtype'] == 'marker':
-        ax.errorbar(bin_centers, bin_height, linestyle='', marker='',
-                    yerr=bin_err, xerr=width*0.5, linewidth=2, color=err_color)
-    else:
-        ax.errorbar(bin_centers, bin_height, linestyle='', marker='',
-                    yerr=bin_err, linewidth=2, color=err_color)
+            ax.errorbar(bin_centers, bin_height[i], linestyle='', marker='',
+                        yerr=bin_err[i], xerr=width*0.5, linewidth=2, color=err_color)
+        else:
+            ax.errorbar(bin_centers, bin_height[i], linestyle='', marker='',
+                        yerr=bin_err[i], linewidth=2, color=err_color)
 
 
-def _redraw_hist(bin_content, patches, histtype, ax):
-    if histtype == 'bar':
-        for i, bc in enumerate(bin_content):
-            plt.setp(patches[i], 'height', bc)
-    elif histtype == 'stepfilled' or histtype == 'step':
-        xy = patches[0].get_xy()
-        j = 0
-        for i, bc in enumerate(bin_content):
-            xy[j+1, 1] = bc
-            xy[j+2, 1] = bc
-            j += 2
-        plt.setp(patches[0], 'xy', xy)
+def _redraw_hist(bin_content, patches, histtype, n_data_sets, ax):
+    if n_data_sets == 1:
+        bin_content = [bin_content]
+        patches = [patches]
+
+    for n in range(n_data_sets):
+        if histtype == 'bar':
+            for i, bc in enumerate(bin_content[n]):
+                plt.setp(patches[n][i], 'height', bc)
+        elif histtype == 'stepfilled' or histtype == 'step':
+            xy = patches[n][0].get_xy()
+            j = 0
+            for i, bc in enumerate(bin_content[n]):
+                xy[j+1, 1] = bc
+                xy[j+2, 1] = bc
+                j += 2
+            plt.setp(patches[n][0], 'xy', xy)
 
     ax.relim()
     ax.autoscale_view(False, False, True)
