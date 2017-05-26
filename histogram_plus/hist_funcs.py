@@ -152,13 +152,12 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
         if 'p0' in kwargs:
             bin_dict['p0'] = kwargs.pop('p0')
 
-    df_list, bin_edges, bin_range = _get_initial_vars(x, bins, bin_range, nx, w, stacked, bin_dict)
-    # Generate histogram-like object.
-    # There are various possible cases that need to be considered separately.
+    # Set up initial binning and range, make dataframes.
 
-    # if histtype == 'marker':
-    #     bc, err_scale, vis_object = _do_marker_hist(x, bin_edges, bin_range, scale, ax, **kwargs)
-    # else:
+    df_list, bin_edges, bin_range = _get_initial_vars(x, bins, bin_range, nx, w, stacked, bin_dict)
+
+    # Generate histogram-like object.
+
     bc, err_scale, vis_object = _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs)
 
     if len(err_dict) > 0:
@@ -206,10 +205,20 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
     if not normed and not scale:
         # Not normalized or scaled, process is straightforward.
         if do_marker:
-            bin_content, bin_edges = np.histogram(data, bin_edges, weights=weights, range=bin_range)
+            if len(data) > 1:
+                bin_content = []
+                for d in range(len(data)):
+                    if weights is None:
+                        w = None
+                    else:
+                        w = weights[d]
+                    bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range)
+                    bin_content.append(bc)
+            else:
+                bin_content, _ = np.histogram(data, bin_edges, weights=weights, range=bin_range)
         else:
-            bin_content, bin_edges, vis_object = ax.hist(data, bin_edges, weights=weights,
-                                                         range=bin_range, **kwargs)
+            bin_content, _, vis_object = ax.hist(data, bin_edges, weights=weights, range=bin_range,
+                                                 **kwargs)
         bin_err = np.sqrt(bin_content)
 
     elif normed and (not scale or scale == 'binwidth'):
@@ -218,22 +227,40 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
         # by binwidth by default, as it is the correct way to renomalize a histogram with variable
         # bin sizes).
         if do_marker:
-            bin_content, bin_edges = np.histogram(data, bin_edges, density=True, weights=weights,
-                                                  range=bin_range)
+            if len(data) > 1:
+                bin_content = []
+                for d in range(len(data)):
+                    if weights is None:
+                        w = None
+                    else:
+                        w = weights[d]
+                    bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range,
+                                         density=True)
+                    bin_content.append(bc)
+            else:
+                bin_content, _ = np.histogram(data, bin_edges, weights=weights, range=bin_range,
+                                              density=True)
         else:
-            bin_content, bin_edges, vis_object = ax.hist(data, bin_edges, normed=True,
-                                                         range=bin_range, **kwargs)
+            bin_content, _, vis_object = ax.hist(data, bin_edges, normed=True, range=bin_range,
+                                                 **kwargs)
         bin_content_no_norm, _ = np.histogram(data, bin_edges, density=False, range=bin_range)
         bin_err = np.sqrt(bin_content_no_norm)*(bin_content/bin_content_no_norm)
 
     elif not normed and isinstance(scale, Number):
         # Just scaled with a single number
         if do_marker:
-            bin_content_no_scale, bin_edges = np.histogram(data, bin_edges, weights=weights,
-                                                           range=bin_range)
+            if len(data) > 1:
+                bin_content_no_scale = []
+                for d in range(len(data)):
+                    if weights is None:
+                        w = None
+                    else:
+                        w = weights[d]
+                    bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range)
+                    bin_content_no_scale.append(bc)
         else:
-            bin_content_no_scale, bin_edges, vis_object = ax.hist(data, bin_edges, range=bin_range,
-                                                                  **kwargs)
+            bin_content_no_scale, _, vis_object = ax.hist(data, bin_edges, range=bin_range,
+                                                          **kwargs)
             redraw = True
         bin_content = np.multiply(bin_content_no_scale, scale)
         bin_err = np.multiply(np.sqrt(bin_content_no_scale), scale)
@@ -241,11 +268,21 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
     elif not normed and scale == 'binwidth':
         # Each bin should be divided by its bin width
         if do_marker:
-            bin_content_no_scale, bin_edges = np.histogram(data, bin_edges, weights=weights,
-                                                           range=bin_range)
+            if len(data) > 1:
+                bin_content = []
+                for d in range(len(data)):
+                    if weights is None:
+                        w = None
+                    else:
+                        w = weights[d]
+                    bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range)
+                    bin_content_no_scale.append(bc)
+            else:
+                bin_content_no_scale, _ = np.histogram(data, bin_edges, weights=weights,
+                                                       range=bin_range)
         else:
-            bin_content_no_scale, bin_edges, vis_object = ax.hist(data, bin_edges, weights=weights,
-                                                                  range=bin_range, **kwargs)
+            bin_content_no_scale, _, vis_object = ax.hist(data, bin_edges, weights=weights,
+                                                          range=bin_range, **kwargs)
             redraw = True
         bin_content = np.ones(bin_content_no_scale.shape)
         bin_err = np.sqrt(bin_content_no_scale)
@@ -259,12 +296,22 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
         # (but this will throw a warning).  First normalize, then scale (otherwise the scale would
         # be irrelevent
         if do_marker:
-            bin_content_norm, bin_edges = np.histogram(data, bin_edges, density=True,
-                                                       weights=weights, range=bin_range)
+            if len(data) > 1:
+                bin_content_norm = []
+                for d in range(len(data)):
+                    if weights is None:
+                        w = None
+                    else:
+                        w = weights[d]
+                    bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range,
+                                         density=True)
+                    bin_content_norm.append(bc)
+            else:
+                bin_content_norm, _ = np.histogram(data, bin_edges, weights=weights,
+                                                   range=bin_range, density=True)
         else:
-            bin_content_norm, bin_edges, vis_object = ax.hist(data, bin_edges, normed=True,
-                                                              weights=weights, range=bin_range,
-                                                              **kwargs)
+            bin_content_norm, _, vis_object = ax.hist(data, bin_edges, normed=True, weights=weights,
+                                                      range=bin_range, **kwargs)
             redraw = True
         bin_content_no_norm, _ = np.histogram(data, bin_edges, density=False, range=bin_range)
         bin_content = np.multiply(bin_content_norm, scale)
@@ -275,8 +322,15 @@ def _do_hist(df_list, bin_edges, bin_range, scale, ax, **kwargs):
         kwargs.pop('histtype')
         widths = bin_edges[1:] - bin_edges[:-1]
         bin_centers = bin_edges[:-1]+widths*0.5
-        vis_object = ax.plot(bin_centers, bin_content, linestyle=linestyle, marker=markerstyle,
-                             **kwargs)
+        if len(df_list) > 1:
+            vis_object = []
+            print bin_content
+            for i in range(len(df_list)):
+                vis_object.append(ax.plot(bin_centers, bin_content[i], linestyle=linestyle,
+                                          marker=markerstyle, **kwargs))
+        else:
+            vis_object = ax.plot(bin_centers, bin_content, linestyle=linestyle, marker=markerstyle,
+                                 **kwargs)
     elif redraw:
         vis_object = _redraw_hist(bin_content, vis_object, histtype, len(df_list), ax)
 
