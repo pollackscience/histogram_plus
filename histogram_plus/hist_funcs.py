@@ -37,18 +37,21 @@ class HistContainer(object):
         self.scale = scale
         self._arg_init(kwargs, w)
         self._df_binning_init(x, w)
-
-        self.bin_content = None
-        self.bin_error = None
+        self.do_redraw = False
 
         if self.normed:
             self.normalize()
         if self.scale:
             self.rescale(self.scale)
 
+        if self.histtype == 'marker':
+            self.vis_object = self.ax.plot(self.bin_centers, self.bin_content, **self.hist_dict)
+
+        elif self.do_redraw and not self.histtype == 'marker':
+            self.redraw()
+
         if self.errorbars:
             self.draw_errorbars()
-
 
     def _checks_and_wrangling(self, x, w):
         # Manage the input data in the same fashion as mpl
@@ -66,7 +69,6 @@ class HistContainer(object):
         self.n_data_sets = len(x)  # number of datasets
 
         # We need to do to 'weights' what was done to 'x'
-        #if 'weights' in kwargs and kwargs['weights'] is not None:
         if w is not None:
             w = cbook._reshape_2D(w)
 
@@ -79,7 +81,6 @@ class HistContainer(object):
                     raise ValueError('weights should have the same shape as x')
 
         return x, w
-
 
     def _arg_init(self, kwargs, w):
         # Break up the kwargs into different chunks depending on the arg
@@ -96,6 +97,9 @@ class HistContainer(object):
         else:
             self.normed = False
 
+        # Scaling by `binwidth` is handled by default during normalization
+        if self.normed and self.scale == 'binwidth':
+            self.scale = None
 
         self.stacked = False
         if 'stacked' in kwargs:
@@ -139,9 +143,6 @@ class HistContainer(object):
             self.bin_dict['bins'] = self.bins
             if w is not None:
                 raise TypeError('Weights are not supported for data-driven binning methods')
-                # warnings.warn(
-                #     "weights argument is not supported for this binning method: it will be ignored.")
-                # kwargs.pop('weights')
             if 'fitness' in kwargs:
                 self.bin_dict['fitness'] = kwargs.pop('fitness')
             if 'p0' in kwargs:
@@ -150,13 +151,12 @@ class HistContainer(object):
         self.hist_dict = kwargs
 
         if self.histtype == 'marker':
-            self.hist_dict.pop('marker')
+            self.hist_dict.pop('histtype')
 
-            if 'markerstyle' not in self.hist_dict:
-                self.hist_dict['markerstyle'] = 'o'
+            if 'marker' not in self.hist_dict:
+                self.hist_dict['marker'] = 'o'
             if 'linestyle' not in self.hist_dict:
                 self.hist_dict['linestyle'] = ''
-
 
     def _df_binning_init(self, data, weights):
         '''Do an initial binning to get bin edges, total hist range, and break each set of data and
@@ -186,7 +186,8 @@ class HistContainer(object):
                     self.bin_edges = bayesian_blocks(t=data[0], fitness='events', p0=0.02)
                 # Stacked data sets
                 elif self.stacked:
-                    self.bin_edges = bayesian_blocks(t=np.concatenate(data), fitness='events', p0=0.02)
+                    self.bin_edges = bayesian_blocks(t=np.concatenate(data), fitness='events',
+                                                     p0=0.02)
                 # Unstacked data
                 else:
                     self.bin_edges = []
@@ -212,84 +213,76 @@ class HistContainer(object):
             df['bins'] = df_bins
             self.df_list.append(df)
 
-
         # Make the initial histograms
         if self.histtype == 'marker':
-            self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights, range=self.bin_range)
-            self.vis_object = self.ax.plot(self.bin_centers, self.bin_content, **self.hist_dict)
+            self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights,
+                                               range=self.bin_range)
+            # self.vis_object = self.ax.plot(self.bin_centers, self.bin_content, **self.hist_dict)
         else:
             self.bin_content, _, self.vis_object = self.ax.hist(data, self.bin_edges,
                                                                 weights=weights,
                                                                 range=self.bin_range,
                                                                 **self.hist_dict)
         if self.errorbars:
-            self.calc_bin_error('default')
-
+            self.calc_bin_error(hist_mod='default')
 
     def normalize(self):
+        self.do_redraw = True
         data = [df.data for df in self.df_list]
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
-
-        if self.histtype == 'marker':
-            if self.n_data_sets > 1:
-                raise ValueError('`histtype: marker` only supports a single input dataset.')
-                # bin_content = []
-                # for d in range(len(data)):
-                #     if weights is None:
-                #         w = None
-                #     else:
-                #         w = weights[d]
-                #     bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range,
-                #                          density=True)
-                #     bin_content.append(bc)
-            else:
-                self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights,
-                                                   range=self.bin_range, density=True)
         else:
-            self.bin_content, _, self.vis_object = self.ax.hist(data, self.bin_edges, normed=True,
-                                                                weights=weights,
-                                                                range=self.bin_range,
-                                                                **self.hist_dict)
-        if self.errorbars:
-            self.calc_bin_error('norm')
+            weights = [None for df in self.df_list]
 
+        if self.n_data_sets == 1:
+            self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights[0],
+                                               range=self.bin_range, density=True)
+        else:
+            self.bin_content = []
+            for i, d in enumerate(data):
+                self.bin_content.append(np.histogram(d, self.bin_edges, weights=weights[i],
+                                                     range=self.bin_range, density=True)[0])
+
+        if self.errorbars:
+            self.calc_bin_error(hist_mod='norm')
 
     def rescale(self, scale):
+        self.do_redraw = True
         if self.bin_content is None:
             raise ValueError('Cannot scale before histogramming')
 
         if isinstance(scale, Number):
             self.bin_content = np.multiply(self.bin_content, scale)
             if self.errorbars:
-                self.calc_bin_error('scale', scale=scale)
+                self.calc_bin_error(hist_mod='scale', scale=scale)
 
         elif scale == 'binwidth':
             widths = np.diff(self.bin_edges)
             self.bin_content = np.divide(self.bin_content, widths)
             if self.errorbars:
-                self.calc_bin_error('scale', scale = 1.0/widths)
-
+                self.calc_bin_error(hist_mod='scale', scale=1.0/widths)
 
     def calc_bin_error(self, err_type='gaussian', hist_mod='default', scale=None):
         data = [df.data for df in self.df_list]
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
+        else:
+            weights = None
 
         if err_type == 'gaussian':
             if hist_mod == 'default':
                 self.bin_err = np.sqrt(self.bin_content)
 
             elif hist_mod == 'norm':
-                bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights, range=self.bin_range)
+                bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
+                                                      range=self.bin_range)
                 self.bin_err = np.sqrt(bin_content_no_norm)*(self.bin_content/bin_content_no_norm)
 
             elif hist_mod == 'scale':
                 self.bin_err = np.multiply(self.bin_err, scale)
 
         else:
-            raise KeyError('`err_type: {}` not implemented')
-
+            raise KeyError('`err_type: {}` not implemented'.format(err_type))
 
     def draw_errorbars(self):
         if self.n_data_sets == 1:
@@ -297,6 +290,8 @@ class HistContainer(object):
             bin_err = [self.bin_err]
             if self.histtype != 'marker':
                 vis_object = [self.vis_object]
+            else:
+                vis_object = self.vis_object
         else:
             bin_height = self.bin_content
             bin_err = self.bin_err
@@ -307,7 +302,7 @@ class HistContainer(object):
                 if self.histtype == 'marker':
                     err_color = colors.to_rgba(vis_object[i]._get_rgba_face())
                 elif self.histtype in ['stepfilled', 'bar']:
-                    err_color = colors.to_rgba(vis_object[i][0][0].get_facecolor())
+                    err_color = colors.to_rgba(vis_object[i][0].get_facecolor())
                 elif self.histtype == 'step':
                     err_color = colors.to_rgba(vis_object[i][0].get_edgecolor())
 
@@ -319,183 +314,37 @@ class HistContainer(object):
 
             if self.histtype == 'marker':
                 self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='', marker='',
-                            yerr=bin_err[i], xerr=self.width*0.5, linewidth=2, color=err_color)
+                                 yerr=bin_err[i], xerr=self.widths*0.5, linewidth=2,
+                                 color=err_color)
             else:
                 self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='', marker='',
-                            yerr=bin_err[i], linewidth=2, color=err_color)
+                                 yerr=bin_err[i], linewidth=2, color=err_color)
 
-
-    def do_hist(self):
-        '''Main plotting and rescaling function.'''
-
-        # Special args for marker-plots
-        if self.histtype == 'marker':
-            if 'marker' in self.hist_dict:
-                markerstyle = self.hist_dict.pop('marker')
-            else:
-                markerstyle = 'o'
-            if 'linestyle' in self.hist_dict:
-                linestyle = self.hist_dict.pop('linestyle')
-            else:
-                linestyle = ''
-            do_marker = True
+    def redraw(self):
+        self.do_redraw = False
+        if self.n_data_sets == 1:
+            bin_content = [self.bin_content]
+            if self.histtype != 'marker':
+                vis_object = [self.vis_object]
         else:
-            do_marker = False
+            bin_content = self.bin_content
+            vis_object = self.vis_object
 
-        data = [df.data for df in self.df_list]
-        if 'weights' in self.df_list[0]:
-            weights = [df.weights for df in self.df_list]
-        else:
-            weights = None
+        for n in range(self.n_data_sets):
+            if self.histtype == 'bar':
+                for i, bc in enumerate(bin_content[n]):
+                    plt.setp(vis_object[n][i], 'height', bc)
+            elif self.histtype == 'stepfilled' or self.histtype == 'step':
+                xy = vis_object[n][0].get_xy()
+                j = 0
+                for i, bc in enumerate(bin_content[n]):
+                    xy[j+1, 1] = bc
+                    xy[j+2, 1] = bc
+                    j += 2
+                plt.setp(vis_object[n][0], 'xy', xy)
 
-        redraw = False
-        # Break into scaling cases
-        if not self.normed and not self.scale:
-            # Not normalized or scaled, process is straightforward.
-            if do_marker:
-                if len(data) > 1:
-                    bin_content = []
-                    for d in range(len(data)):
-                        if weights is None:
-                            w = None
-                        else:
-                            w = weights[d]
-                        bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range)
-                        bin_content.append(bc)
-                else:
-                    bin_content, _ = np.histogram(data, bin_edges, weights=weights, range=bin_range)
-            else:
-                bin_content, _, vis_object = ax.hist(data, bin_edges, weights=weights, range=bin_range,
-                                                     **kwargs)
-            bin_err = np.sqrt(bin_content)
-
-        elif normed and (not scale or scale == 'binwidth'):
-            # Just normalized: calculate both the normed and default hist (ratio is needed for proper
-            # error bar calculation).  If 'binwdith' is selected for scale, ignore scaling (norm scales
-            # by binwidth by default, as it is the correct way to renomalize a histogram with variable
-            # bin sizes).
-            if do_marker:
-                if len(data) > 1:
-                    bin_content = []
-                    for d in range(len(data)):
-                        if weights is None:
-                            w = None
-                        else:
-                            w = weights[d]
-                        bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range,
-                                             density=True)
-                        bin_content.append(bc)
-                else:
-                    bin_content, _ = np.histogram(data, bin_edges, weights=weights, range=bin_range,
-                                                  density=True)
-            else:
-                bin_content, _, vis_object = ax.hist(data, bin_edges, normed=True, range=bin_range,
-                                                     **kwargs)
-            bin_content_no_norm, _ = np.histogram(data, bin_edges, density=False, range=bin_range)
-            bin_err = np.sqrt(bin_content_no_norm)*(bin_content/bin_content_no_norm)
-
-        elif not normed and isinstance(scale, Number):
-            # Just scaled with a single number
-            if do_marker:
-                if len(data) > 1:
-                    bin_content_no_scale = []
-                    for d in range(len(data)):
-                        if weights is None:
-                            w = None
-                        else:
-                            w = weights[d]
-                        bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range)
-                        bin_content_no_scale.append(bc)
-            else:
-                bin_content_no_scale, _, vis_object = ax.hist(data, bin_edges, range=bin_range,
-                                                              **kwargs)
-                redraw = True
-            bin_content = np.multiply(bin_content_no_scale, scale)
-            bin_err = np.multiply(np.sqrt(bin_content_no_scale), scale)
-
-        elif not normed and scale == 'binwidth':
-            # Each bin should be divided by its bin width
-            if do_marker:
-                if len(data) > 1:
-                    bin_content = []
-                    for d in range(len(data)):
-                        if weights is None:
-                            w = None
-                        else:
-                            w = weights[d]
-                        bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range)
-                        bin_content_no_scale.append(bc)
-                else:
-                    bin_content_no_scale, _ = np.histogram(data, bin_edges, weights=weights,
-                                                           range=bin_range)
-            else:
-                bin_content_no_scale, _, vis_object = ax.hist(data, bin_edges, weights=weights,
-                                                              range=bin_range, **kwargs)
-                redraw = True
-            bin_content = np.ones(bin_content_no_scale.shape)
-            bin_err = np.sqrt(bin_content_no_scale)
-            widths = bin_edges[1:] - bin_edges[:-1]
-            for i, bc in enumerate(bin_content_no_scale):
-                bin_content[i] = (bc/widths[i])
-                bin_err[i] /= widths[i]
-
-        elif normed and isinstance(scale, Number):
-            # Normed and scaled (with a number): Assume the user is not mistakenly using both options
-            # (but this will throw a warning).  First normalize, then scale (otherwise the scale would
-            # be irrelevent
-            if do_marker:
-                if len(data) > 1:
-                    bin_content_norm = []
-                    for d in range(len(data)):
-                        if weights is None:
-                            w = None
-                        else:
-                            w = weights[d]
-                        bc, _ = np.histogram(data[d], bin_edges, weights=w, range=bin_range,
-                                             density=True)
-                        bin_content_norm.append(bc)
-                else:
-                    bin_content_norm, _ = np.histogram(data, bin_edges, weights=weights,
-                                                       range=bin_range, density=True)
-            else:
-                bin_content_norm, _, vis_object = ax.hist(data, bin_edges, normed=True, weights=weights,
-                                                          range=bin_range, **kwargs)
-                redraw = True
-            bin_content_no_norm, _ = np.histogram(data, bin_edges, density=False, range=bin_range)
-            bin_content = np.multiply(bin_content_norm, scale)
-            bin_err = np.multiply(np.sqrt(bin_content_no_norm),
-                                  np.multiply(np.divide(bin_content_norm, bin_content_no_norm), scale))
-
-        if do_marker:
-            kwargs.pop('histtype')
-            widths = bin_edges[1:] - bin_edges[:-1]
-            bin_centers = bin_edges[:-1]+widths*0.5
-            # if len(df_list) > 1:
-            #     # vis_object = []
-            #     # print bin_content
-            #     # for i in range(len(df_list)):
-            #     #     vis_object.append(ax.plot(bin_centers, bin_content[i], linestyle=linestyle,
-            #     #                               marker=markerstyle, **kwargs))
-            #     x_and_ys = list(itertools.chain.from_iterable(zip([bin_centers]*len(df_list),
-            #                                                       bin_content)))
-            #     vis_object = ax.plot(*x_and_ys, linestyle=linestyle,
-            #                          marker=markerstyle, **kwargs)
-            #     # print vis_object
-            # else:
-            vis_object = ax.plot(bin_centers, bin_content, linestyle=linestyle, marker=markerstyle,
-                                 **kwargs)
-
-        if len(df_list) == 1:
-            bin_content = [bin_content]
-            vis_object = [vis_object]
-
-        if redraw:
-            vis_object = _redraw_hist(bin_content, vis_object, histtype, len(df_list), ax)
-
-        return bin_content, bin_err, vis_object
-
-
-
+        self.ax.relim()
+        self.ax.autoscale_view(False, False, True)
 
 
 def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
@@ -544,61 +393,8 @@ def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
     # Generate a histogram object
 
     hist_con = HistContainer(x, bins, range, errorbars, scale, kwargs)
-    hist_con.do_hist()
-    hist_con.do_err_bars()
 
     return hist_con.bin_content, hist_con.bin_edges, hist_con.vis_object
-
-def _do_err_bars(bin_height, bin_edges, bin_err, n_data_sets, ax, vis_object, **kwargs):
-    print vis_object
-    width = (bin_edges[1:]-bin_edges[:-1])
-    bin_centers = bin_edges[:-1]+width*0.5
-    if n_data_sets == 1:
-        bin_height = [bin_height]
-        bin_err = [bin_err]
-        if kwargs['histtype'] != 'marker':
-            vis_object = [vis_object]
-
-    for i in range(n_data_sets):
-        if kwargs['errcolor'] == 'inherit':
-            if kwargs['histtype'] == 'marker':
-                err_color = colors.to_rgba(vis_object[i]._get_rgba_face())
-            elif kwargs['histtype'] in ['stepfilled', 'bar']:
-                err_color = colors.to_rgba(vis_object[i][0][0].get_facecolor())
-            elif kwargs['histtype'] == 'step':
-                err_color = colors.to_rgba(vis_object[i][0].get_edgecolor())
-
-            hls_tmp = colorsys.rgb_to_hls(*err_color[:-1])
-            err_color = list(colorsys.hls_to_rgb(hls_tmp[0], hls_tmp[1]*0.7, hls_tmp[2])) + \
-                [err_color[-1]]
-        else:
-            err_color = kwargs['errcolor']
-
-        if kwargs['histtype'] == 'marker':
-            ax.errorbar(bin_centers, bin_height[i], linestyle='', marker='',
-                        yerr=bin_err[i], xerr=width*0.5, linewidth=2, color=err_color)
-        else:
-            ax.errorbar(bin_centers, bin_height[i], linestyle='', marker='',
-                        yerr=bin_err[i], linewidth=2, color=err_color)
-
-
-def _redraw_hist(bin_content, patches, histtype, n_data_sets, ax):
-    for n in range(n_data_sets):
-        if histtype == 'bar':
-            for i, bc in enumerate(bin_content[n]):
-                plt.setp(patches[n][i], 'height', bc)
-        elif histtype == 'stepfilled' or histtype == 'step':
-            xy = patches[n][0].get_xy()
-            j = 0
-            for i, bc in enumerate(bin_content[n]):
-                xy[j+1, 1] = bc
-                xy[j+2, 1] = bc
-                j += 2
-            plt.setp(patches[n][0], 'xy', xy)
-
-    ax.relim()
-    ax.autoscale_view(False, False, True)
-    return patches
 
 
 def poisson_error(bin_content, suppress_zero=False):
