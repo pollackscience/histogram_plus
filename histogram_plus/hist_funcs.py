@@ -14,6 +14,7 @@ import pandas as pd
 # scotts_bin_width, freedman_bin_width,\
 
 from bb.tools.bayesian_blocks_modified import bayesian_blocks
+from bb.tools.fill_between_steps import fill_between_steps
 
 
 class HistContainer(object):
@@ -124,10 +125,10 @@ class HistContainer(object):
         self.err_dict = {}
         if not (self.errorbars is None or self.errorbars is False):
             self.err_dict['errorbars'] = self.errorbars
-            if 'err_type' in kwargs:
-                self.err_dict['err_type'] = kwargs.pop('err_type')
+            if 'err_style' in kwargs:
+                self.err_dict['err_style'] = kwargs.pop('err_style')
             else:
-                self.err_dict['err_type'] = 'line'
+                self.err_dict['err_style'] = 'line'
             if 'err_color' in kwargs:
                 self.err_dict['err_color'] = kwargs.pop('err_color')
             else:
@@ -136,6 +137,14 @@ class HistContainer(object):
                 self.err_dict['suppress_zero'] = kwargs.pop('suppress_zero')
             else:
                 self.err_dict['suppress_zero'] = True
+
+            # tweak histogram styles for `band` err_style
+
+            if self.err_dict['err_style'] == 'band':
+                if 'edgecolor' not in kwargs:
+                    kwargs['edgecolor'] = 'k'
+                if 'linewidth' not in kwargs:
+                    kwargs['linewidth'] = 2
 
         # For data-driven binning
         self.bin_dict = {}
@@ -313,12 +322,24 @@ class HistContainer(object):
                 err_color = self.err_dict['err_color']
 
             if self.histtype == 'marker':
-                self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='', marker='',
-                                 yerr=bin_err[i], xerr=self.widths*0.5, linewidth=2,
-                                 color=err_color)
+                print self.widths
+                _, caps, _ = self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='',
+                                              marker='', yerr=bin_err[i], xerr=self.widths*0.5,
+                                              linewidth=2, color=err_color)
             else:
-                self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='', marker='',
-                                 yerr=bin_err[i], linewidth=2, color=err_color)
+                if self.err_dict['err_style'] == 'line':
+                    self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='', marker='',
+                                     yerr=bin_err[i], linewidth=2, color=err_color)
+
+                elif self.err_dict['err_style'] == 'band':
+                    fill_between_steps(self.ax, self.bin_edges, bin_height[i]+bin_err[i],
+                                       bin_height[i]-bin_err[i], step_where='pre', linewidth=0,
+                                       color=err_color, alpha=0.3)
+
+            # print caps
+            # for cap in caps[:2]:
+            #     print cap
+            #     cap.set_markersize(0)
 
     def redraw(self):
         self.do_redraw = False
