@@ -21,7 +21,7 @@ class HistContainer(object):
     def __init__(self, x, bins, range, errorbars, scale, kwargs):
 
         if 'weights' in kwargs and kwargs['weights'] is not None:
-            w = kwargs['weights']
+            w = kwargs.pop('weights')
             self.has_weights = True
         else:
             w = None
@@ -235,7 +235,7 @@ class HistContainer(object):
             weights = [None for df in self.df_list]
 
         if self.n_data_sets == 1:
-            self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights[0],
+            self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights,
                                                range=self.bin_range, density=True)
         else:
             self.bin_content = []
