@@ -127,6 +127,8 @@ class HistContainer(object):
             self.err_dict['errorbars'] = self.errorbars
             if 'err_style' in kwargs:
                 self.err_dict['err_style'] = kwargs.pop('err_style')
+            elif self.histtype in ['stepfilled', 'bar']:
+                self.err_dict['err_style'] = 'band'
             else:
                 self.err_dict['err_style'] = 'line'
             if 'err_color' in kwargs:
@@ -137,6 +139,10 @@ class HistContainer(object):
                 self.err_dict['suppress_zero'] = kwargs.pop('suppress_zero')
             else:
                 self.err_dict['suppress_zero'] = True
+            if 'err_type' in kwargs:
+                self.err_dict['err_type'] = kwargs.pop('err_type')
+            else:
+                self.err_dict['err_type'] = 'gaussian'
 
             # tweak histogram styles for `band` err_style
 
@@ -166,6 +172,12 @@ class HistContainer(object):
                 self.hist_dict['marker'] = 'o'
             if 'linestyle' not in self.hist_dict:
                 self.hist_dict['linestyle'] = ''
+
+        if 'alpha' not in self.hist_dict:
+            self.hist_dict['alpha'] = 0.5
+
+        if 'linewidth' not in self.hist_dict and self.histtype == 'step':
+            self.hist_dict['linewidth'] = 2
 
     def _df_binning_init(self, data, weights):
         '''Do an initial binning to get bin edges, total hist range, and break each set of data and
@@ -271,27 +283,52 @@ class HistContainer(object):
             if self.errorbars:
                 self.calc_bin_error(hist_mod='scale', scale=1.0/widths)
 
-    def calc_bin_error(self, err_type='gaussian', hist_mod='default', scale=None):
+    def calc_bin_error(self, hist_mod='default', scale=None):
+
         data = [df.data for df in self.df_list]
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
         else:
             weights = None
 
-        if err_type == 'gaussian':
-            if hist_mod == 'default':
-                self.bin_err = np.sqrt(self.bin_content)
+        bin_err_tmp = None
+        bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
+                                              range=self.bin_range)
 
-            elif hist_mod == 'norm':
-                bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
-                                                      range=self.bin_range)
-                self.bin_err = np.sqrt(bin_content_no_norm)*(self.bin_content/bin_content_no_norm)
+        if self.err_dict['err_type'] == 'gaussian':
+            # bin_err_tmp = np.sqrt(bin_content_no_norm)
+            bin_err_tmp = np.sqrt(self.bin_content)
+            print bin_err_tmp
 
-            elif hist_mod == 'scale':
-                self.bin_err = np.multiply(self.bin_err, scale)
+        elif self.err_dict['err_type'] == 'sumW2':
+            bin_err_tmp = []
+            for df in self.df_list:
+                df['weights2'] = np.square(df.weights)
+                bin_err_tmp.append(np.sqrt((df.groupby('bins')['weights2'].sum().fillna(0).values)))
+                print df.groupby('bins')['weights2'].sum()
+                print df.groupby('bins')['weights2'].sum().values
+
+            bin_err_tmp = bin_err_tmp[-1]
+            print bin_err_tmp
+
+        elif self.err_dict['err_type'] == 'poisson':
+            pass
 
         else:
-            raise KeyError('`err_type: {}` not implemented'.format(err_type))
+            raise KeyError('`err_type: {}` not implemented'.format(self.err_dict['err_type']))
+
+        # Modifiy the error bars if needed (due to normalization or scaling)
+        if hist_mod == 'default':
+            self.bin_err = bin_err_tmp
+
+        elif hist_mod == 'norm':
+            self.bin_err = bin_err_tmp*(self.bin_content/bin_content_no_norm)
+
+        elif hist_mod == 'scale':
+            self.bin_err = np.multiply(bin_err_tmp, scale)
+
+        else:
+            raise KeyError('`hist_mod: {}` not implemented'.format(hist_mod))
 
     def draw_errorbars(self):
         if self.n_data_sets == 1:
@@ -334,12 +371,8 @@ class HistContainer(object):
                 elif self.err_dict['err_style'] == 'band':
                     fill_between_steps(self.ax, self.bin_edges, bin_height[i]+bin_err[i],
                                        bin_height[i]-bin_err[i], step_where='pre', linewidth=0,
-                                       color=err_color, alpha=0.3)
-
-            # print caps
-            # for cap in caps[:2]:
-            #     print cap
-            #     cap.set_markersize(0)
+                                       color=err_color, alpha=self.hist_dict['alpha']*0.8,
+                                       zorder=10)
 
     def redraw(self):
         self.do_redraw = False
