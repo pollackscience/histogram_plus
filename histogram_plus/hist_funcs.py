@@ -13,8 +13,8 @@ import pandas as pd
 # from astroML.density_estimation import knuth_bin_width
 # scotts_bin_width, freedman_bin_width,\
 
-from bb.tools.bayesian_blocks_modified import bayesian_blocks
-from bb.tools.fill_between_steps import fill_between_steps
+from histogram_plus.bayesian_blocks_hep import bayesian_blocks
+from histogram_plus.fill_between_steps import fill_between_steps
 
 
 class HistContainer(object):
@@ -141,6 +141,8 @@ class HistContainer(object):
                 self.err_dict['suppress_zero'] = True
             if 'err_type' in kwargs:
                 self.err_dict['err_type'] = kwargs.pop('err_type')
+            elif self.has_weights:
+                self.err_dict['err_type'] = 'sumW2'
             else:
                 self.err_dict['err_type'] = 'gaussian'
 
@@ -156,8 +158,8 @@ class HistContainer(object):
         self.bin_dict = {}
         if isinstance(self.bins, str):
             self.bin_dict['bins'] = self.bins
-            if w is not None:
-                raise TypeError('Weights are not supported for data-driven binning methods')
+            # if w is not None:
+            #     raise TypeError('Weights are not supported for data-driven binning methods')
             if 'fitness' in kwargs:
                 self.bin_dict['fitness'] = kwargs.pop('fitness')
             if 'p0' in kwargs:
@@ -204,7 +206,11 @@ class HistContainer(object):
             # Special case for Bayesian Blocks
             if self.bins in ['block', 'blocks']:
                 if self.n_data_sets == 1:
-                    self.bin_edges = bayesian_blocks(t=data[0], fitness='events', p0=0.02)
+                    if self.has_weights:
+                        weights = np.ravel(weights)
+                    else:
+                        weights = None
+                    self.bin_edges = bayesian_blocks(t=data[0], x=weights, p0=0.02)
                 # Stacked data sets
                 elif self.stacked:
                     self.bin_edges = bayesian_blocks(t=np.concatenate(data), fitness='events',
@@ -252,6 +258,8 @@ class HistContainer(object):
         data = [df.data for df in self.df_list]
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
+        elif self.n_data_sets == 1:
+            weights = None
         else:
             weights = [None for df in self.df_list]
 
@@ -288,28 +296,31 @@ class HistContainer(object):
         data = [df.data for df in self.df_list]
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
-        else:
+        elif self.n_data_sets == 1:
             weights = None
+        else:
+            weights = [None for df in self.df_list]
 
-        bin_err_tmp = None
-        bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
-                                              range=self.bin_range)
+        if self.n_data_sets == 1:
+            bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
+                                                  range=self.bin_range)
+        else:
+            bin_content_no_norm = []
+            for i, d in enumerate(data):
+                bin_content_no_norm.append(np.histogram(d, self.bin_edges, weights=weights[i],
+                                                        range=self.bin_range)[0])
 
         if self.err_dict['err_type'] == 'gaussian':
-            # bin_err_tmp = np.sqrt(bin_content_no_norm)
-            bin_err_tmp = np.sqrt(self.bin_content)
-            print bin_err_tmp
+            bin_err_tmp = np.sqrt(bin_content_no_norm)
+            # bin_err_tmp = np.sqrt(self.bin_content)
 
         elif self.err_dict['err_type'] == 'sumW2':
             bin_err_tmp = []
             for df in self.df_list:
                 df['weights2'] = np.square(df.weights)
                 bin_err_tmp.append(np.sqrt((df.groupby('bins')['weights2'].sum().fillna(0).values)))
-                print df.groupby('bins')['weights2'].sum()
-                print df.groupby('bins')['weights2'].sum().values
 
             bin_err_tmp = bin_err_tmp[-1]
-            print bin_err_tmp
 
         elif self.err_dict['err_type'] == 'poisson':
             pass
@@ -322,7 +333,7 @@ class HistContainer(object):
             self.bin_err = bin_err_tmp
 
         elif hist_mod == 'norm':
-            self.bin_err = bin_err_tmp*(self.bin_content/bin_content_no_norm)
+            self.bin_err = bin_err_tmp*(np.divide(self.bin_content, bin_content_no_norm))
 
         elif hist_mod == 'scale':
             self.bin_err = np.multiply(bin_err_tmp, scale)
@@ -359,7 +370,6 @@ class HistContainer(object):
                 err_color = self.err_dict['err_color']
 
             if self.histtype == 'marker':
-                print self.widths
                 _, caps, _ = self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='',
                                               marker='', yerr=bin_err[i], xerr=self.widths*0.5,
                                               linewidth=2, color=err_color)
