@@ -17,6 +17,7 @@ References
 """
 from __future__ import division
 import numpy as np
+import pandas as pd
 
 
 class Events(object):
@@ -34,10 +35,6 @@ class Events(object):
     def __init__(self, p0=0.05, gamma=None):
         self.p0 = p0
         self.gamma = gamma
-
-    def validate_input(self, t, x):
-        """Check that input is valid"""
-        pass
 
     def fitness(self, N_k, T_k):
         # eq. 19 from Scargle 2012
@@ -73,7 +70,7 @@ class Events(object):
             return self.fitness.__code__.co_varnames[1:]
 
 
-def bayesian_blocks(t, x=None, p0=0.05, gamma=None):
+def bayesian_blocks(data, weights=None, p0=0.05, gamma=None):
     """Bayesian Blocks Implementation
 
     This is a flexible implementation of the Bayesian Blocks algorithm
@@ -81,10 +78,10 @@ def bayesian_blocks(t, x=None, p0=0.05, gamma=None):
 
     Parameters
     ----------
-    t : array_like
-        data times (one dimensional, length N)
-    x : array_like (optional)
-        data values
+    data : array_like
+        input data values (one dimensional, length N)
+    weights : array_like (optional)
+        weights for data (otherwise assume all data points habve a weight of 1)
 
     Returns
     -------
@@ -114,54 +111,36 @@ def bayesian_blocks(t, x=None, p0=0.05, gamma=None):
     astroML.plotting.hist : histogram plotting function which can make use
                             of bayesian blocks.
     """
-    # validate array input
-    t = np.asarray(t, dtype=float)
-    if x is not None:
-        x = np.asarray(x)
+    # validate input data
+    data = np.asarray(data, dtype=float)
+    assert data.ndim == 1
+
+    # validate input weights
+    if weights is not None:
+        weights = np.asarray(weights)
+    else:
+        # set them to 1 if not given
+        weights = np.ones_like(data)
 
     # verify the fitness function
-    # if x is not None and np.any(x % 1 > 0):
-    #     raise ValueError("x must be integer counts for fitness='events'")
     fitfunc = Events(p0, gamma)
 
-    # find unique values of t
-    t = np.array(t, dtype=float)
-    assert t.ndim == 1
-    unq_t, unq_ind, unq_inv = np.unique(t, return_index=True,
-                                        return_inverse=True)
+    # Place data and weights into a DataFrame.
+    # We want to sort the data array (without losing the associated weights), and combine duplicate
+    # data points by summing their weights together.  We can accomplish all this with `groupby`
 
-    # if x is not specified, x will be counts at each time
-    if x is None:
-        if len(unq_t) == len(t):
-            x = np.ones_like(t)
-        else:
-            x = np.bincount(unq_inv)
+    df = pd.DataFrame({'data': data, 'weights': weights})
+    gb = df.groupby('data').sum()
+    data = gb.index.values
+    weights = gb.weights.values
 
-        t = unq_t
-
-    # if x is specified, then we need to sort t and x together
-    else:
-        x = np.asarray(x)
-
-        if len(t) != len(x):
-            raise ValueError("Size of t and x does not match")
-
-        if len(unq_t) != len(t):
-            raise ValueError("Repeated values in t not supported when "
-                             "x is specified")
-        t = unq_t
-        x = x[unq_ind]
-
-    N = t.size
-    # validate the input
-
-    fitfunc.validate_input(t, x)
+    N = weights.size
 
     # create length-(N + 1) array of cell edges
-    edges = np.concatenate([t[:1],
-                            0.5 * (t[1:] + t[:-1]),
-                            t[-1:]])
-    block_length = t[-1] - edges
+    edges = np.concatenate([data[:1],
+                            0.5 * (data[1:] + data[:-1]),
+                            data[-1:]])
+    block_length = data[-1] - edges
 
     # arrays to store the best configuration
     best = np.zeros(N, dtype=float)
@@ -180,7 +159,7 @@ def bayesian_blocks(t, x=None, p0=0.05, gamma=None):
 
         # N_k: number of elements in each block
         if 'N_k' in fitfunc.args:
-            kwds['N_k'] = np.cumsum(x[:R + 1][::-1])[::-1]
+            kwds['N_k'] = np.cumsum(weights[:R + 1][::-1])[::-1]
 
         # evaluate fitness function
         fit_vec = fitfunc.fitness(**kwds)
@@ -192,9 +171,9 @@ def bayesian_blocks(t, x=None, p0=0.05, gamma=None):
         last[R] = i_max
         best[R] = A_R[i_max]
 
-    #-----------------------------------------------------------------
+    # -----------------------------------------------------------------
     # Now find changepoints by iteratively peeling off the last block
-    #-----------------------------------------------------------------
+    # -----------------------------------------------------------------
     change_points = np.zeros(N, dtype=int)
     i_cp = N
     ind = N

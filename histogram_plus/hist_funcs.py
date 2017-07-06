@@ -157,7 +157,7 @@ class HistContainer(object):
         # For data-driven binning
         self.bin_dict = {}
         if isinstance(self.bins, str):
-            self.bin_dict['bins'] = self.bins
+            # self.bin_dict['bins'] = self.bins
             # if w is not None:
             #     raise TypeError('Weights are not supported for data-driven binning methods')
             if 'fitness' in kwargs:
@@ -205,22 +205,22 @@ class HistContainer(object):
 
             # Special case for Bayesian Blocks
             if self.bins in ['block', 'blocks']:
+                if self.has_weights:
+                    weights = np.ravel(weights)
+                else:
+                    weights = None
+
+                # Single data-set
                 if self.n_data_sets == 1:
-                    if self.has_weights:
-                        weights = np.ravel(weights)
-                    else:
-                        weights = None
-                    self.bin_edges = bayesian_blocks(t=data[0], x=weights, p0=0.02)
+                    self.bin_edges = bayesian_blocks(data=data[0], weights=weights, **self.bin_dict)
+
                 # Stacked data sets
                 elif self.stacked:
-                    self.bin_edges = bayesian_blocks(t=np.concatenate(data), fitness='events',
-                                                     p0=0.02)
+                    self.bin_edges = bayesian_blocks(data=np.ravel(data), weights=weights,
+                                                     **self.bin_dict)
                 # Unstacked data
                 else:
-                    self.bin_edges = []
-                    for i in xrange(self.n_data_sets):
-                        self.bin_edges.append(bayesian_blocks(t=data[i], fitness='events', p0=0.02))
-                    self.bin_edges = np.asarray(np.sort(np.concatenate(self.bin_edges)))
+                    raise ValueError('Cannot use Bayesian Blocks with multiple, unstacked datasets')
 
             else:
                 _, self.bin_edges = np.histogram(data, bins=self.bins, weights=weights,

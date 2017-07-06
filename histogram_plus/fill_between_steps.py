@@ -33,15 +33,23 @@ def fill_between_steps(ax, x, y1, y2=0, step_where='pre', **kwargs):
     '''
 
     # Modification to account for histogram-like bin-edges
-    if len(x) == len(y1)+1:
+    if len(x) == len(y1)+1 and len(y1) != 1:
         kwargs['linewidth'] = 0
         if isinstance(y2, collections.Container):
-            _y2 = y2[0:2]
+            y2_trunc = y2[0:2]
         else:
-            _y2 = y2
-        fill_between_steps(ax, x[0:2], y1[0:2], y2=_y2, step_where='post', **kwargs)
+            y2_trunc = y2
+        fill_between_steps(ax, x[0:2], y1[0:2], y2=y2_trunc, step_where='post', **kwargs)
         kwargs['label'] = None
         return fill_between_steps(ax, x[1:], y1, y2=y2, step_where='pre', **kwargs)
+
+    # Account for case in which there is exactly one bin
+    elif len(y1) == 1:
+        y1 = y1[0]
+        if isinstance(y2, collections.Container):
+            y2 = y2[0]
+        else:
+            y2 = y2
 
     if step_where not in {'pre', 'post', 'mid'}:
         raise ValueError("where must be one of {{'pre', 'post', 'mid'}} "
