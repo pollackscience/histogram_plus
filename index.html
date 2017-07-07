@@ -32,7 +32,8 @@
   
 
   
-    <link rel="top" title="histogram_plus 0.1 documentation" href="#"/> 
+    <link rel="top" title="histogram_plus 0.1 documentation" href="#"/>
+        <link rel="next" title="Simple Example" href="_static/hist_example.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -81,12 +82,10 @@
           
             
             
-                <!-- Local TOC -->
-                <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">histogram_plus: More features, just as easy to use.</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="_static/hist_example.html">Simple Example</a></li>
 </ul>
-</div>
+
             
           
         </div>
@@ -129,13 +128,50 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="histogram-plus-more-features-just-as-easy-to-use">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+/* nice headers on first paragraph of info/warning boxes */
+.admonition .first {
+    margin: -12px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    color: #fff;
+    line-height: 1;
+    display: block;
+}
+.admonition.warning .first {
+    background: #f0b37e;
+}
+.admonition.note .first {
+    background: #6ab0de;
+}
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+</style>
+<div class="section" id="histogram-plus-more-features-just-as-easy-to-use">
 <h1>histogram_plus: More features, just as easy to use.<a class="headerlink" href="#histogram-plus-more-features-just-as-easy-to-use" title="Permalink to this headline">¶</a></h1>
 <p><cite>histogram_plus</cite> is histogramming package based off of <cite>matplotlib</cite>&#8216;s histogram methods.  This
 package adds additional needed features, such as automatic error bar calculation and display, the
 ability to use markers for visualization, and the Bayesian Blocks data-driven binning method.</p>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="_static/hist_example.html">Simple Example</a></li>
+</ul>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -151,6 +187,13 @@ ability to use markers for visualization, and the Bayesian Blocks data-driven bi
            </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="_static/hist_example.html" class="btn btn-neutral float-right" title="Simple Example" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
   
 
   <hr/>
