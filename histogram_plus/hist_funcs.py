@@ -10,9 +10,6 @@ from matplotlib import colors
 import matplotlib.cbook as cbook
 import pandas as pd
 
-# from astroML.density_estimation import knuth_bin_width
-# scotts_bin_width, freedman_bin_width,\
-
 from histogram_plus.bayesian_blocks_hep import bayesian_blocks
 from histogram_plus.fill_between_steps import fill_between_steps
 
@@ -156,14 +153,10 @@ class HistContainer(object):
 
         # For data-driven binning
         self.bin_dict = {}
-        if isinstance(self.bins, str):
-            # self.bin_dict['bins'] = self.bins
-            # if w is not None:
-            #     raise TypeError('Weights are not supported for data-driven binning methods')
-            if 'fitness' in kwargs:
-                self.bin_dict['fitness'] = kwargs.pop('fitness')
-            if 'p0' in kwargs:
-                self.bin_dict['p0'] = kwargs.pop('p0')
+        if 'fitness' in kwargs:
+            self.bin_dict['fitness'] = kwargs.pop('fitness')
+        if 'p0' in kwargs:
+            self.bin_dict['p0'] = kwargs.pop('p0')
 
         self.hist_dict = kwargs
 
