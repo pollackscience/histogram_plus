@@ -5,7 +5,7 @@
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
-BUILDDIR      = build
+BUILDDIR      = _build
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -13,8 +13,7 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
-# Added to make github pages
-GH_PAGES_SOURCES = source mu2e Makefile
+GH_PAGES_SOURCES = source histogram_plus Makefile
 
 .PHONY: help
 help:
@@ -106,9 +105,9 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/Mu2E.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/histogram_plus.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/Mu2E.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/histogram_plus.qhc"
 
 .PHONY: applehelp
 applehelp:
@@ -125,8 +124,8 @@ devhelp:
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/Mu2E"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/Mu2E"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/histogram_plus"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/histogram_plus"
 	@echo "# devhelp"
 
 .PHONY: epub
