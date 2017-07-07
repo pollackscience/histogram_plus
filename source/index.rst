@@ -15,6 +15,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   _static/hist_example.ipynb
+
 
 
 Indices and tables
