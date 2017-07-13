@@ -91,7 +91,7 @@ class HistContainer(object):
             # if histtype == 'marker':
             #     kwargs.pop('histtype')  # Don't want to feed this arg to plt.plot
         else:
-            self.kwargs['histtype'] = 'stepfilled'
+            self.histtype = 'stepfilled'
 
         if 'normed' in kwargs:
             self.normed = kwargs.pop('normed')
@@ -123,45 +123,41 @@ class HistContainer(object):
         # Group arguments into different dicts
         # For error bars:
         self.err_dict = {}
-        if not (self.errorbars is None or self.errorbars is False):
-            self.err_dict['errorbars'] = self.errorbars
-            if 'err_style' in kwargs:
-                self.err_dict['err_style'] = kwargs.pop('err_style')
-            elif self.histtype in ['stepfilled', 'bar']:
-                self.err_dict['err_style'] = 'band'
-            else:
-                self.err_dict['err_style'] = 'line'
-            if 'err_color' in kwargs:
-                self.err_dict['err_color'] = kwargs.pop('err_color')
-            else:
-                self.err_dict['err_color'] = 'auto'
-            if 'suppress_zero' in kwargs:
-                self.err_dict['suppress_zero'] = kwargs.pop('suppress_zero')
-            else:
-                self.err_dict['suppress_zero'] = True
-            if 'err_type' in kwargs:
-                self.err_dict['err_type'] = kwargs.pop('err_type')
-            elif self.has_weights:
-                self.err_dict['err_type'] = 'sumW2'
-            else:
-                self.err_dict['err_type'] = 'gaussian'
+        self.err_dict['errorbars'] = self.errorbars
+        if 'err_style' in kwargs:
+            self.err_dict['err_style'] = kwargs.pop('err_style')
+        elif self.histtype in ['stepfilled', 'bar']:
+            self.err_dict['err_style'] = 'band'
+        else:
+            self.err_dict['err_style'] = 'line'
+        if 'err_color' in kwargs:
+            self.err_dict['err_color'] = kwargs.pop('err_color')
+        else:
+            self.err_dict['err_color'] = 'auto'
+        if 'suppress_zero' in kwargs:
+            self.err_dict['suppress_zero'] = kwargs.pop('suppress_zero')
+        else:
+            self.err_dict['suppress_zero'] = True
+        if 'err_type' in kwargs:
+            self.err_dict['err_type'] = kwargs.pop('err_type')
+        elif self.has_weights:
+            self.err_dict['err_type'] = 'sumW2'
+        else:
+            self.err_dict['err_type'] = 'gaussian'
 
-            # tweak histogram styles for `band` err_style
+        # tweak histogram styles for `band` err_style
 
-            if self.err_dict['err_style'] == 'band':
-                if 'edgecolor' not in kwargs:
-                    kwargs['edgecolor'] = 'k'
-                if 'linewidth' not in kwargs:
-                    kwargs['linewidth'] = 2
+        if self.err_dict['err_style'] == 'band':
+            if 'edgecolor' not in kwargs:
+                kwargs['edgecolor'] = 'k'
+            if 'linewidth' not in kwargs:
+                kwargs['linewidth'] = 2
 
         # For data-driven binning
         self.bin_dict = {}
         if isinstance(self.bins, str):
-            # self.bin_dict['bins'] = self.bins
-            # if w is not None:
-            #     raise TypeError('Weights are not supported for data-driven binning methods')
-            if 'fitness' in kwargs:
-                self.bin_dict['fitness'] = kwargs.pop('fitness')
+            if 'gamma' in kwargs:
+                self.bin_dict['gamma'] = kwargs.pop('gamma')
             if 'p0' in kwargs:
                 self.bin_dict['p0'] = kwargs.pop('p0')
 
@@ -250,6 +246,9 @@ class HistContainer(object):
                                                                 weights=weights,
                                                                 range=self.bin_range,
                                                                 **self.hist_dict)
+
+        self.bin_content_orig = self.bin_content[:]
+
         if self.errorbars:
             self.calc_bin_error(hist_mod='default')
 
@@ -258,7 +257,9 @@ class HistContainer(object):
         data = [df.data for df in self.df_list]
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
-        elif self.n_data_sets == 1:
+            if self.stacked:
+                weights = np.ravel(weights)
+        elif self.n_data_sets == 1 or self.stacked:
             weights = None
         else:
             weights = [None for df in self.df_list]
@@ -266,6 +267,13 @@ class HistContainer(object):
         if self.n_data_sets == 1:
             self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights,
                                                range=self.bin_range, density=True)
+        elif self.stacked:
+            total_bin_content, _ = np.histogram(np.ravel(data), self.bin_edges, weights=weights,
+                                                range=self.bin_range, density=True)
+            bin_scales = np.divide(total_bin_content, self.bin_content[-1])
+            for i in range(self.n_data_sets):
+                self.bin_content[i] = np.multiply(bin_scales, self.bin_content[i])
+
         else:
             self.bin_content = []
             for i, d in enumerate(data):
@@ -385,6 +393,7 @@ class HistContainer(object):
                                        zorder=10)
 
     def redraw(self):
+        self.bc_scales = np.divide(self.bin_content, self.bin_content_orig)
         self.do_redraw = False
         if self.n_data_sets == 1:
             bin_content = [self.bin_content]
@@ -395,17 +404,36 @@ class HistContainer(object):
             vis_object = self.vis_object
 
         for n in range(self.n_data_sets):
-            if self.histtype == 'bar':
-                for i, bc in enumerate(bin_content[n]):
-                    plt.setp(vis_object[n][i], 'height', bc)
-            elif self.histtype == 'stepfilled' or self.histtype == 'step':
+            if self.stacked:
                 xy = vis_object[n][0].get_xy()
                 j = 0
-                for i, bc in enumerate(bin_content[n]):
-                    xy[j+1, 1] = bc
-                    xy[j+2, 1] = bc
+                for bcs in self.bc_scales[-1]:
+                    xy[j+1, 1] *= bcs
+                    xy[j+2, 1] *= bcs
                     j += 2
+                if self.histtype == 'step':
+                    xy[0, 1] *= self.bc_scales[-1][0]
+                    xy[-1, 1] *= self.bc_scales[-1][-1]
+                elif self.histtype in ['bar', 'stepfilled']:
+                    for bcs in self.bc_scales[-1][::-1]:
+                        xy[j+1, 1] *= bcs
+                        xy[j+2, 1] *= bcs
+                        j += 2
+                    xy[0, 1] = xy[-1, 1]
                 plt.setp(vis_object[n][0], 'xy', xy)
+
+            else:
+                if self.histtype == 'bar':
+                    for i, bc in enumerate(bin_content[n]):
+                        plt.setp(vis_object[n][i], 'height', bc)
+                elif self.histtype == 'stepfilled' or self.histtype == 'step':
+                    xy = vis_object[n][0].get_xy()
+                    j = 0
+                    for bc in bin_content[n]:
+                        xy[j+1, 1] = bc
+                        xy[j+2, 1] = bc
+                        j += 2
+                    plt.setp(vis_object[n][0], 'xy', xy)
 
         self.ax.relim()
         self.ax.autoscale_view(False, False, True)
