@@ -17,6 +17,56 @@ from histogram_plus.bayesian_blocks_hep import bayesian_blocks
 from histogram_plus.fill_between_steps import fill_between_steps
 
 
+def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
+    """Enhanced histogram, based on `hist` function from astroML, which in turn is built off the
+    `hist` function from matplotlib.  Various additions are also inspired from ROOT histograms.
+    The main additional features are the ability to use data-driven binning algorithms,
+    the addition of errorbars, and more scaling options (like dividing all bin values by their
+    widths).
+
+    Args:
+    x (array_like, or list of array_like): Array of data to be histogrammed.
+    bins (int or List or str, optional):  If `int`, `bins` number of equal-width bins are generated.
+        The width is determined by either equal divison of the given `range`, or equal division
+        between the first and last data point if no `range` is specified.
+
+        If `List`, bin edges are taken directly from `List` (can be unequal width).
+
+        If `str`, then it must be one of:
+        'blocks' : use bayesian blocks for dynamic bin widths
+        'knuth' : use Knuth's rule to determine bins
+        'scott' : use Scott's rule to determine bins
+        'freedman' : use the Freedman-diaconis rule to determine bins
+
+    ax : Axes instance (optional)
+        Specify the Axes on which to draw the histogram.  If not specified,
+        then the current active axes will be used.
+
+    scale : Number or str (optional)
+        If Number, all bin contents are multiplied by the given value.
+        If str:
+            'binwidth' : every bin content is divided by the bin width.
+
+    **kwargs :
+        Overloaded kwargs variants:
+            histtype:
+                'markers' : plot the bin contents as markers, centered on the bin centers.
+                If this method is chosen, all additional kwargs for `pylab.plot()` can be used.
+
+        Other keyword arguments are described in `pylab.hist()`.
+
+
+
+    Brian Pollack, 2017
+    """
+
+    # Generate a histogram object
+
+    hist_con = HistContainer(x, bins, range, errorbars, scale, kwargs)
+
+    return hist_con.bin_content, hist_con.bin_edges, hist_con.vis_object
+
+
 class HistContainer(object):
     """Class to hold histogram properties and members."""
     def __init__(self, x, bins, range, errorbars, scale, kwargs):
@@ -202,17 +252,18 @@ class HistContainer(object):
             # Special case for Bayesian Blocks
             if self.bins in ['block', 'blocks']:
                 if self.has_weights:
-                    weights = np.ravel(weights)
+                    b_weights = np.ravel(weights)
                 else:
-                    weights = None
+                    b_weights = None
 
                 # Single data-set
                 if self.n_data_sets == 1:
-                    self.bin_edges = bayesian_blocks(data=data[0], weights=weights, **self.bin_dict)
+                    self.bin_edges = bayesian_blocks(data=data[0], weights=b_weights,
+                                                     **self.bin_dict)
 
                 # Stacked data sets
                 elif self.stacked:
-                    self.bin_edges = bayesian_blocks(data=np.ravel(data), weights=weights,
+                    self.bin_edges = bayesian_blocks(data=np.ravel(data), weights=b_weights,
                                                      **self.bin_dict)
                 # Unstacked data
                 else:
@@ -302,14 +353,19 @@ class HistContainer(object):
     def calc_bin_error(self, hist_mod='default', scale=None):
 
         data = [df.data for df in self.df_list]
+        if self.stacked:
+            data = np.ravel(data)
+
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
-        elif self.n_data_sets == 1:
+            if self.stacked:
+                weights = np.ravel(weights)
+        elif self.n_data_sets == 1 or self.stacked:
             weights = None
         else:
             weights = [None for df in self.df_list]
 
-        if self.n_data_sets == 1:
+        if self.n_data_sets == 1 or self.stacked:
             bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
                                                   range=self.bin_range)
         else:
@@ -324,7 +380,12 @@ class HistContainer(object):
 
         elif self.err_dict['err_type'] == 'sumW2':
             bin_err_tmp = []
-            for df in self.df_list:
+            if self.stacked:
+                df_list_tmp = [pd.concat(self.df_list, ignore_index=True)]
+            else:
+                df_list_tmp = self.df_list
+
+            for df in df_list_tmp:
                 df['weights2'] = np.square(df.weights)
                 bin_err_tmp.append(np.sqrt((df.groupby('bins')['weights2'].sum().fillna(0).values)))
 
@@ -357,13 +418,21 @@ class HistContainer(object):
                 vis_object = [self.vis_object]
             else:
                 vis_object = self.vis_object
+        elif self.stacked:
+            bin_height = [self.bin_content[-1]]
+            bin_err = [self.bin_err]
+            vis_object = [self.vis_object]
         else:
             bin_height = self.bin_content
             bin_err = self.bin_err
             vis_object = self.vis_object
 
-        for i in range(self.n_data_sets):
-            if self.err_dict['err_color'] == 'auto':
+        if not self.stacked:
+            n_data_sets_eff = self.n_data_sets
+        else:
+            n_data_sets_eff = 1
+        for i in range(n_data_sets_eff):
+            if self.err_dict['err_color'] == 'auto' and not self.stacked:
                 if self.histtype == 'marker':
                     err_color = colors.to_rgba(vis_object[i]._get_rgba_face())
                 elif self.histtype in ['stepfilled', 'bar']:
@@ -374,6 +443,8 @@ class HistContainer(object):
                 hls_tmp = colorsys.rgb_to_hls(*err_color[:-1])
                 err_color = list(colorsys.hls_to_rgb(hls_tmp[0], hls_tmp[1]*0.7, hls_tmp[2])) + \
                     [err_color[-1]]
+            elif self.err_dict['err_color'] == 'auto' and self.stacked:
+                err_color = next(self.ax._get_lines.prop_cycler)['color']
             else:
                 err_color = self.err_dict['err_color']
 
@@ -437,56 +508,6 @@ class HistContainer(object):
 
         self.ax.relim()
         self.ax.autoscale_view(False, False, True)
-
-
-def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
-    """Enhanced histogram, based on `hist` function from astroML, which in turn is built off the
-    `hist` function from matplotlib.  Various additions are also inspired from ROOT histograms.
-    The main additional features are the ability to use data-driven binning algorithms,
-    the addition of errorbars, and more scaling options (like dividing all bin values by their
-    widths).
-
-    Args:
-    x (array_like, or list of array_like): Array of data to be histogrammed.
-    bins (int or List or str, optional):  If `int`, `bins` number of equal-width bins are generated.
-        The width is determined by either equal divison of the given `range`, or equal division
-        between the first and last data point if no `range` is specified.
-
-        If `List`, bin edges are taken directly from `List` (can be unequal width).
-
-        If `str`, then it must be one of:
-        'blocks' : use bayesian blocks for dynamic bin widths
-        'knuth' : use Knuth's rule to determine bins
-        'scott' : use Scott's rule to determine bins
-        'freedman' : use the Freedman-diaconis rule to determine bins
-
-    ax : Axes instance (optional)
-        Specify the Axes on which to draw the histogram.  If not specified,
-        then the current active axes will be used.
-
-    scale : Number or str (optional)
-        If Number, all bin contents are multiplied by the given value.
-        If str:
-            'binwidth' : every bin content is divided by the bin width.
-
-    **kwargs :
-        Overloaded kwargs variants:
-            histtype:
-                'markers' : plot the bin contents as markers, centered on the bin centers.
-                If this method is chosen, all additional kwargs for `pylab.plot()` can be used.
-
-        Other keyword arguments are described in `pylab.hist()`.
-
-
-
-    Brian Pollack, 2017
-    """
-
-    # Generate a histogram object
-
-    hist_con = HistContainer(x, bins, range, errorbars, scale, kwargs)
-
-    return hist_con.bin_content, hist_con.bin_edges, hist_con.vis_object
 
 
 def poisson_error(bin_content, suppress_zero=False):
