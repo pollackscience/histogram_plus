@@ -141,6 +141,7 @@ class HistContainer(object):
             # if histtype == 'marker':
             #     kwargs.pop('histtype')  # Don't want to feed this arg to plt.plot
         else:
+            kwargs['histtype'] = 'stepfilled'
             self.histtype = 'stepfilled'
 
         if 'normed' in kwargs:
@@ -240,37 +241,41 @@ class HistContainer(object):
 
         # If bin edges need to be determined, there's a few different cases to consider
         else:
+            if self.stacked:
+                _n_data_sets = 1
+                b_data = [np.concatenate(data)]
+                if self.has_weights:
+                    b_weights = np.concatenate(weights)
+                else:
+                    b_weights = None
+            else:
+                _n_data_sets = self.n_data_sets
+                b_data = data
+                b_weights = weights
+
             if self.bin_range is None:
                 xmin = np.inf
                 xmax = -np.inf
-                for i in xrange(self.n_data_sets):
+                for i in xrange(_n_data_sets):
                     if len(data[i]) > 0:
-                        xmin = min(xmin, min(data[i]))
-                        xmax = max(xmax, max(data[i]))
+                        xmin = min(xmin, min(b_data[i]))
+                        xmax = max(xmax, max(b_data[i]))
                 self.bin_range = (xmin, xmax)
 
             # Special case for Bayesian Blocks
             if self.bins in ['block', 'blocks']:
-                if self.has_weights:
-                    b_weights = np.ravel(weights)
-                else:
-                    b_weights = None
 
-                # Single data-set
-                if self.n_data_sets == 1:
-                    self.bin_edges = bayesian_blocks(data=data[0], weights=b_weights,
+                # Single data-set or stacked
+                if _n_data_sets == 1 or self.stacked:
+                    self.bin_edges = bayesian_blocks(data=b_data[0], weights=b_weights,
                                                      **self.bin_dict)
 
-                # Stacked data sets
-                elif self.stacked:
-                    self.bin_edges = bayesian_blocks(data=np.ravel(data), weights=b_weights,
-                                                     **self.bin_dict)
                 # Unstacked data
                 else:
                     raise ValueError('Cannot use Bayesian Blocks with multiple, unstacked datasets')
 
             else:
-                _, self.bin_edges = np.histogram(data, bins=self.bins, weights=weights,
+                _, self.bin_edges = np.histogram(b_data, bins=self.bins, weights=b_weights,
                                                  range=self.bin_range)
 
         self.widths = np.diff(self.bin_edges)
@@ -309,7 +314,7 @@ class HistContainer(object):
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
             if self.stacked:
-                weights = np.ravel(weights)
+                weights = np.concatenate(weights)
         elif self.n_data_sets == 1 or self.stacked:
             weights = None
         else:
@@ -319,8 +324,8 @@ class HistContainer(object):
             self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights,
                                                range=self.bin_range, density=True)
         elif self.stacked:
-            total_bin_content, _ = np.histogram(np.ravel(data), self.bin_edges, weights=weights,
-                                                range=self.bin_range, density=True)
+            total_bin_content, _ = np.histogram(np.concatenate(data), self.bin_edges,
+                                                weights=weights, range=self.bin_range, density=True)
             bin_scales = np.divide(total_bin_content, self.bin_content[-1])
             for i in range(self.n_data_sets):
                 self.bin_content[i] = np.multiply(bin_scales, self.bin_content[i])
@@ -354,12 +359,12 @@ class HistContainer(object):
 
         data = [df.data for df in self.df_list]
         if self.stacked:
-            data = np.ravel(data)
+            data = np.concatenate(data)
 
         if self.has_weights:
             weights = [df.weights for df in self.df_list]
             if self.stacked:
-                weights = np.ravel(weights)
+                weights = np.concatenate(weights)
         elif self.n_data_sets == 1 or self.stacked:
             weights = None
         else:
