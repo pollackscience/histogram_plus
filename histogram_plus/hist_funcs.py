@@ -16,42 +16,49 @@ import pandas as pd
 from histogram_plus.bayesian_blocks_hep import bayesian_blocks
 from histogram_plus.fill_between_steps import fill_between_steps
 
+import warnings
+warnings.filterwarnings('ignore')
 
-def hist(x, bins=10, range=None, errorbars=None, scale=None, **kwargs):
-    """Enhanced histogram, based on `hist` function from astroML, which in turn is built off the
-    `hist` function from matplotlib.  Various additions are also inspired from ROOT histograms.
+
+def hist(x, bins='auto', range=None, errorbars=False, scale=None, **kwargs):
+    """Enhanced histogram, based on `hist` function from matplotlib and astroML.
     The main additional features are the ability to use data-driven binning algorithms,
-    the addition of errorbars, and more scaling options (like dividing all bin values by their
-    widths).
+    the addition of errorbars, scaling options (like dividing all bin values by their
+    widths), and marker-style draw options.  `hist` function wraps `HistContainer` class, which does
+    the majority of work.
 
     Args:
-    x (array_like, or list of array_like): Array of data to be histogrammed.
-    bins (int or List or str, optional):  If `int`, `bins` number of equal-width bins are generated.
-        The width is determined by either equal divison of the given `range`, or equal division
-        between the first and last data point if no `range` is specified.
+        x (array_like, or list of array_like): Array of data to be histogrammed.
+        bins (int or List or str, optional):  If `int`, `bins` number of equal-width bins are
+            generated.  The width is determined by either equal divison of the given `range`, or
+            equal division between the first and last data point if no `range` is specified.
+            If `List`, bin edges are taken directly from `List` (can be unequal width).
+            If `str`, then it must be one of:
+            'blocks' : use bayesian blocks for dynamic bin widths.
+            'auto' : use `auto` feature from numpy.histogram.
+            Defaults to 'auto'.
+        range (tuple or None, optional): If specificed, data will only be considered and shown
+            for the range given.  Otherwise, `range` will be between the highest and lowest
+            datapoint.
+            Defaults to None.
+        errorbars (boolean or array_like, optional): If True, errorbars will be calculated and
+            displayed based on the `err_*` arguments.  The errorbars will be appropriately
+            modified if `scale` and/or `normed` is True. If an array is specificed, those values
+            will be used (and will not be modifed by any other methods).
+            Defaults to False.
+        scale (Number or `str`, optional)
+            If Number, all bin contents are multiplied by the given value.
+            If str, parameter must be 'binwidth' : every bin content is divided by the bin width.
+            Defaults to None
 
-        If `List`, bin edges are taken directly from `List` (can be unequal width).
-
-        If `str`, then it must be one of:
-        'blocks' : use bayesian blocks for dynamic bin widths
-        'knuth' : use Knuth's rule to determine bins
-        'scott' : use Scott's rule to determine bins
-        'freedman' : use the Freedman-diaconis rule to determine bins
-
-    ax : Axes instance (optional)
-        Specify the Axes on which to draw the histogram.  If not specified,
-        then the current active axes will be used.
-
-    scale : Number or str (optional)
-        If Number, all bin contents are multiplied by the given value.
-        If str:
-            'binwidth' : every bin content is divided by the bin width.
-
-    **kwargs :
-        Overloaded kwargs variants:
-            histtype:
-                'markers' : plot the bin contents as markers, centered on the bin centers.
-                If this method is chosen, all additional kwargs for `pylab.plot()` can be used.
+        **kwargs :
+            Overloaded kwargs variants:
+                histtype:
+                    'markers' : plot the bin contents as markers, centered on the bin centers.
+                    If this method is chosen, all additional kwargs for `pylab.plot()` can be used.
+                ax : Axes instance (optional)
+                    Specify the Axes on which to draw the histogram.  If not specified,
+                    then the current active axes will be used.
 
         Other keyword arguments are described in `pylab.hist()`.
 
