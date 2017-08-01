@@ -91,13 +91,20 @@ def hist(x, bins='auto', range=None, weights=None, errorbars=False, normed=False
 
             Defaults to 'stepfilled'.
 
-        **kwargs :
-
+        **kwargs:
             * ax (matplotlib axes instance):
-                Specify the Axes on which to draw the histogram.  If
-                not specified, then the current active axes will be used, or a new axes instance
-                will be generated.
-            * err_style ('band' or 'line'): Draw style for errorbars.
+                Specify the Axes on which to draw the histogram.  If not specified, then the current
+                active axes will be used, or a new axes instance will be generated.
+            * err_style ('band' or 'line'):
+                Draw style for errorbars. Defaults depend on `histtype`,
+                where histtype='stepfilled' corresponds to 'band', and all others correspond to
+                'line'.
+            * err_color ('auto' or valid `matplotlib` colors):  Color for error bars.  If 'auto' is
+                chosen and `stacked` is False, The color will be a slightly darker version of the
+                associated histogram color.  If `stacked` is True, color will be the next in the
+                current color cycle.
+
+                Defaults to 'auto'.
 
         Other keyword arguments are described in `pylab.hist()`.
 
