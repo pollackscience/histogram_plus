@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from __future__ import division
-# import warnings
+from six.moves import range
+from six.moves import zip
 from numbers import Number
 from collections import Iterable
 # import itertools
@@ -20,7 +22,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def hist(x, bins='auto', range=None, errorbars=False, scale=None, **kwargs):
+def hist(x, bins='auto', range=None, weights=None, errorbars=False, normed=False, scale=None,
+         stacked=False, histtype='stepfilled', **kwargs):
     """Enhanced histogram, based on `hist` function from matplotlib and astroML.
     The main additional features are the ability to use data-driven binning algorithms,
     the addition of errorbars, scaling options (like dividing all bin values by their
@@ -28,37 +31,70 @@ def hist(x, bins='auto', range=None, errorbars=False, scale=None, **kwargs):
     the majority of work.
 
     Args:
-        x (array_like, or list of array_like): Array of data to be histogrammed.
+        x (array_like, or list of array_like):  Array of data to be histogrammed.
         bins (int or List or str, optional):  If `int`, `bins` number of equal-width bins are
             generated.  The width is determined by either equal divison of the given `range`, or
             equal division between the first and last data point if no `range` is specified.
+
             If `List`, bin edges are taken directly from `List` (can be unequal width).
-            If `str`, then it must be one of:
-            'blocks' : use bayesian blocks for dynamic bin widths.
-            'auto' : use `auto` feature from numpy.histogram.
+
+            If `str`, then it must be one of
+                'blocks' : use bayesian blocks for dynamic bin widths.
+
+                'auto' : use `auto` feature from numpy.histogram.
+
             Defaults to 'auto'.
-        range (tuple or None, optional): If specificed, data will only be considered and shown
+
+        range (tuple or None, optional):  If specificed, data will only be considered and shown
             for the range given.  Otherwise, `range` will be between the highest and lowest
             datapoint.
+
             Defaults to None.
-        errorbars (boolean or array_like, optional): If True, errorbars will be calculated and
-            displayed based on the `err_*` arguments.  The errorbars will be appropriately
+
+        weights (array_like or None, optional): Weights associated with each data point.  If
+            specified, bin content will be equal to the sum of all relevant weights.
+
+            Defaults to None.
+
+        errorbars (boolean or array_like, optional):  If True, errorbars will be calculated and
+            displayed based on the `err_*` arguments. The errorbars will be appropriately
             modified if `scale` and/or `normed` is True. If an array is specificed, those values
             will be used (and will not be modifed by any other methods).
+
             Defaults to False.
-        scale (Number or `str`, optional)
-            If Number, all bin contents are multiplied by the given value.
-            If str, parameter must be 'binwidth' : every bin content is divided by the bin width.
+
+        normed (boolean, optional): If True, histogram will be normalized such that the integral
+            over all bins with be equal to 1.  In general, this will NOT mean that the sum of all
+            bin contents will be 1, unless all bin widths are equal to 1. If used with `scale`
+            option, normalization happens before scale.
+
+            Defaults to False
+
+        scale (Number or 'binwidth', optional):  If Number, all bin contents are multiplied by the
+            given value.  If 'binwidth', every bin content is divided by the bin width. If used with
+            `normed` option, scaling occurs after normalization ('binwidth' will be ignored in this
+            case, because it is handled automatically when normalizing).
+
             Defaults to None
 
+        stacked (boolean, optional): If True, multiple input data sets will be layered on top of
+            each other, such that the height of each bin is the sum of all the relevant dataset
+            contributions.  If used with errorbars, the bars will be associated with the bin totals,
+            not the individual components.
+
+            Defaults to False.
+
+        histtype (stepfilled', 'step', 'bar', or 'marker'): Draw options for histograms.
+            'stepfilled', 'step', and 'bar' inherit from `matplotlib`.  'marker' places a single
+            point at the center of each bin (best used with error bars).  'marker' will throw an
+            exception if used with 'stacked' option.
+
+            Defaults to 'stepfilled'.
+
         **kwargs :
-            Overloaded kwargs variants:
-                histtype:
-                    'markers' : plot the bin contents as markers, centered on the bin centers.
-                    If this method is chosen, all additional kwargs for `pylab.plot()` can be used.
-                ax : Axes instance (optional)
-                    Specify the Axes on which to draw the histogram.  If not specified,
-                    then the current active axes will be used.
+            * ax : Axes instance (optional):
+                Specify the Axes on which to draw the histogram.  If not specified,
+                then the current active axes will be used, or a new axes instance will be generated.
 
         Other keyword arguments are described in `pylab.hist()`.
 
@@ -69,32 +105,40 @@ def hist(x, bins='auto', range=None, errorbars=False, scale=None, **kwargs):
 
     # Generate a histogram object
 
-    hist_con = HistContainer(x, bins, range, errorbars, scale, kwargs)
+    hist_con = HistContainer(x, bins, range, weights, errorbars, normed, scale, stacked,
+                             histtype, kwargs)
 
     return hist_con.bin_content, hist_con.bin_edges, hist_con.vis_object
 
 
 class HistContainer(object):
     """Class to hold histogram properties and members."""
-    def __init__(self, x, bins, range, errorbars, scale, kwargs):
+    def __init__(self, x, bins, range, weights, errorbars, normed, scale, stacked, histtype,
+                 kwargs):
 
-        if 'weights' in kwargs and kwargs['weights'] is not None:
-            w = kwargs.pop('weights')
-            self.has_weights = True
-        else:
-            w = None
+        if weights is None:
             self.has_weights = False
-
-        x, w = self._checks_and_wrangling(x, w)
+        else:
+            self.has_weights = True
+        x, weights = self._checks_and_wrangling(x, weights)
 
         # Prevent hiding of builtins, define members from args
         self.bin_range = range
         del range
         self.bins = bins
-        self.errorbars = errorbars
+        if isinstance(errorbars, Iterable):
+            self.bin_err = errorbars
+            self.errorbars = 'given'
+        elif errorbars:
+            self.errorbars = 'calc'
+        else:
+            self.errorbars = False
+        self.normed = normed
         self.scale = scale
-        self._arg_init(kwargs, w)
-        self._df_binning_init(x, w)
+        self.stacked = stacked
+        self.histtype = histtype
+        self._arg_init(kwargs, weights)
+        self._df_binning_init(x, weights)
         self.do_redraw = False
 
         if self.normed:
@@ -141,30 +185,14 @@ class HistContainer(object):
         return x, w
 
     def _arg_init(self, kwargs, w):
-        # Break up the kwargs into different chunks depending on the arg
-        self.histtype = None
-        if 'histtype' in kwargs:
-            self.histtype = kwargs['histtype']
-            # if histtype == 'marker':
-            #     kwargs.pop('histtype')  # Don't want to feed this arg to plt.plot
-        else:
-            kwargs['histtype'] = 'stepfilled'
-            self.histtype = 'stepfilled'
-
-        if 'normed' in kwargs:
-            self.normed = kwargs.pop('normed')
-        else:
-            self.normed = False
+        # Break up the kwargs into different chunks depending on the arg, and set various defaults.
 
         # Scaling by `binwidth` is handled by default during normalization
         if self.normed and self.scale == 'binwidth':
             self.scale = None
 
-        self.stacked = False
-        if 'stacked' in kwargs:
-            self.stacked = kwargs['stacked']
-            if self.histtype == 'marker' and self.stacked:
-                raise ValueError('Do not stack with markers, that would be silly')
+        if self.histtype == 'marker' and self.stacked:
+            raise ValueError('Do not stack with markers, that would be silly')
 
         if self.histtype == 'marker' and self.n_data_sets > 1:
             raise ValueError('`marker` histtype does not currently support multiple input datasets')
@@ -205,7 +233,7 @@ class HistContainer(object):
 
         # tweak histogram styles for `band` err_style
 
-        if self.err_dict['err_style'] == 'band':
+        if self.err_dict['err_style'] == 'band' and self.errorbars:
             if 'edgecolor' not in kwargs:
                 kwargs['edgecolor'] = 'k'
             if 'linewidth' not in kwargs:
@@ -220,10 +248,11 @@ class HistContainer(object):
                 self.bin_dict['p0'] = kwargs.pop('p0')
 
         self.hist_dict = kwargs
+        if self.histtype != 'marker':
+            self.hist_dict['histtype'] = self.histtype
 
+        # set some marker defaults
         if self.histtype == 'marker':
-            self.hist_dict.pop('histtype')
-
             if 'marker' not in self.hist_dict:
                 self.hist_dict['marker'] = 'o'
             if 'linestyle' not in self.hist_dict:
@@ -252,7 +281,7 @@ class HistContainer(object):
                 _n_data_sets = 1
                 b_data = [np.concatenate(data)]
                 if self.has_weights:
-                    b_weights = np.concatenate(weights)
+                    b_weights = [np.concatenate(weights)]
                 else:
                     b_weights = None
             else:
@@ -263,7 +292,7 @@ class HistContainer(object):
             if self.bin_range is None:
                 xmin = np.inf
                 xmax = -np.inf
-                for i in xrange(_n_data_sets):
+                for i in range(_n_data_sets):
                     if len(data[i]) > 0:
                         xmin = min(xmin, min(b_data[i]))
                         xmax = max(xmax, max(b_data[i]))
@@ -273,11 +302,14 @@ class HistContainer(object):
             if self.bins in ['block', 'blocks']:
 
                 # Single data-set or stacked
-                if _n_data_sets == 1 or self.stacked:
+                if _n_data_sets == 1:
+
+                    if self.has_weights:
+                        b_weights = b_weights[0]
+                    else:
+                        b_weights = None
                     self.bin_edges = bayesian_blocks(data=b_data[0], weights=b_weights,
                                                      **self.bin_dict)
-
-                # Unstacked data
                 else:
                     raise ValueError('Cannot use Bayesian Blocks with multiple, unstacked datasets')
 
@@ -290,7 +322,7 @@ class HistContainer(object):
 
         # Now put the data into dataframes with the weights and bins
         self.df_list = []
-        for i in xrange(self.n_data_sets):
+        for i in range(self.n_data_sets):
             if weights is None:
                 df = pd.DataFrame({'data': data[i]})
             else:
@@ -308,11 +340,12 @@ class HistContainer(object):
             self.bin_content, _, self.vis_object = self.ax.hist(data, self.bin_edges,
                                                                 weights=weights,
                                                                 range=self.bin_range,
+                                                                stacked=self.stacked,
                                                                 **self.hist_dict)
 
         self.bin_content_orig = self.bin_content[:]
 
-        if self.errorbars:
+        if self.errorbars == 'calc' and not (self.normed or self.scale):
             self.calc_bin_error(hist_mod='default')
 
     def normalize(self):
@@ -343,7 +376,7 @@ class HistContainer(object):
                 self.bin_content.append(np.histogram(d, self.bin_edges, weights=weights[i],
                                                      range=self.bin_range, density=True)[0])
 
-        if self.errorbars:
+        if self.errorbars == 'calc':
             self.calc_bin_error(hist_mod='norm')
 
     def rescale(self, scale):
@@ -353,74 +386,85 @@ class HistContainer(object):
 
         if isinstance(scale, Number):
             self.bin_content = np.multiply(self.bin_content, scale)
-            if self.errorbars:
-                self.calc_bin_error(hist_mod='scale', scale=scale)
+            if self.errorbars == 'calc':
+                self.calc_bin_error(hist_mod='scale', scale=scale, exist=self.normed)
 
         elif scale == 'binwidth':
             widths = np.diff(self.bin_edges)
             self.bin_content = np.divide(self.bin_content, widths)
-            if self.errorbars:
-                self.calc_bin_error(hist_mod='scale', scale=1.0/widths)
+            if self.errorbars == 'calc':
+                self.calc_bin_error(hist_mod='scale', scale=1.0/widths, exist=self.normed)
 
-    def calc_bin_error(self, hist_mod='default', scale=None):
+    def calc_bin_error(self, hist_mod='default', scale=None, exist=False):
 
-        data = [df.data for df in self.df_list]
-        if self.stacked:
-            data = np.concatenate(data)
-
-        if self.has_weights:
-            weights = [df.weights for df in self.df_list]
+        # make new error bars if they haven't been calc'd
+        if not exist:
+            data = [df.data for df in self.df_list]
             if self.stacked:
-                weights = np.concatenate(weights)
-        elif self.n_data_sets == 1 or self.stacked:
-            weights = None
-        else:
-            weights = [None for df in self.df_list]
+                data = np.concatenate(data)
 
-        if self.n_data_sets == 1 or self.stacked:
-            bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
-                                                  range=self.bin_range)
-        else:
-            bin_content_no_norm = []
-            for i, d in enumerate(data):
-                bin_content_no_norm.append(np.histogram(d, self.bin_edges, weights=weights[i],
-                                                        range=self.bin_range)[0])
-
-        if self.err_dict['err_type'] == 'gaussian':
-            bin_err_tmp = np.sqrt(bin_content_no_norm)
-            # bin_err_tmp = np.sqrt(self.bin_content)
-
-        elif self.err_dict['err_type'] == 'sumW2':
-            bin_err_tmp = []
-            if self.stacked:
-                df_list_tmp = [pd.concat(self.df_list, ignore_index=True)]
+            if self.has_weights:
+                weights = [df.weights for df in self.df_list]
+                if self.stacked:
+                    weights = np.concatenate(weights)
+            elif self.n_data_sets == 1 or self.stacked:
+                weights = None
             else:
-                df_list_tmp = self.df_list
+                weights = [None for df in self.df_list]
 
-            for df in df_list_tmp:
-                df['weights2'] = np.square(df.weights)
-                bin_err_tmp.append(np.sqrt((df.groupby('bins')['weights2'].sum().fillna(0).values)))
+            if self.n_data_sets == 1 or self.stacked:
+                bin_content_no_norm, _ = np.histogram(data, self.bin_edges, weights=weights,
+                                                      range=self.bin_range)
+            else:
+                bin_content_no_norm = []
+                for i, d in enumerate(data):
+                    bin_content_no_norm.append(np.histogram(d, self.bin_edges, weights=weights[i],
+                                                            range=self.bin_range)[0])
 
-            bin_err_tmp = bin_err_tmp[-1]
+            if self.err_dict['err_type'] == 'gaussian':
+                bin_err_tmp = np.sqrt(bin_content_no_norm)
+                # bin_err_tmp = np.sqrt(self.bin_content)
 
-        elif self.err_dict['err_type'] == 'poisson':
-            pass
+            elif self.err_dict['err_type'] == 'sumW2':
+                bin_err_tmp = []
+                if self.stacked:
+                    df_list_tmp = [pd.concat(self.df_list, ignore_index=True)]
+                else:
+                    df_list_tmp = self.df_list
 
+                for df in df_list_tmp:
+                    df['weights2'] = np.square(df.weights)
+                    bin_err_tmp.append(np.sqrt((
+                        df.groupby('bins')['weights2'].sum().fillna(0).values)))
+
+                bin_err_tmp = bin_err_tmp[-1]
+
+            elif self.err_dict['err_type'] == 'poisson':
+                pass
+
+            else:
+                raise KeyError('`err_type: {}` not implemented'.format(self.err_dict['err_type']))
+
+            # Modifiy the error bars if needed (due to normalization or scaling)
+            if hist_mod == 'default':
+                self.bin_err = bin_err_tmp
+
+            elif hist_mod == 'norm':
+                if self.stacked:
+                    bc = self.bin_content[-1]
+                else:
+                    bc = self.bin_content
+                self.bin_err = bin_err_tmp*(np.divide(bc, bin_content_no_norm))
+
+            elif hist_mod == 'scale':
+                self.bin_err = np.multiply(bin_err_tmp, scale)
+
+            else:
+                raise KeyError('`hist_mod: {}` not implemented'.format(hist_mod))
+
+        # if errors already exist due to norm calc
         else:
-            raise KeyError('`err_type: {}` not implemented'.format(self.err_dict['err_type']))
-
-        # Modifiy the error bars if needed (due to normalization or scaling)
-        if hist_mod == 'default':
-            self.bin_err = bin_err_tmp
-
-        elif hist_mod == 'norm':
-            self.bin_err = bin_err_tmp*(np.divide(self.bin_content, bin_content_no_norm))
-
-        elif hist_mod == 'scale':
-            self.bin_err = np.multiply(bin_err_tmp, scale)
-
-        else:
-            raise KeyError('`hist_mod: {}` not implemented'.format(hist_mod))
+            self.bin_err = np.multiply(self.bin_err, scale)
 
     def draw_errorbars(self):
         if self.n_data_sets == 1:

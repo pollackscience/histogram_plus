@@ -15,7 +15,9 @@ References
 .. [2] http://jakevdp.github.com/blog/2012/09/12/dynamic-programming-in-python/
 .. [3] https://github.com/astroML/astroML/blob/master/astroML/density_estimation/bayesian_blocks.py
 """
+from __future__ import absolute_import
 from __future__ import division
+from six.moves import range
 import numpy as np
 import pandas as pd
 
@@ -27,7 +29,7 @@ class Events(object):
     ----------
     p0 : float
         False alarm probability, used to compute the prior on N
-        (see eq. 21 of Scargle 2012).  Default prior is for p0 = 0.
+        (see eq. 21 of Scargle 2012).  Default prior is for p0 = 0.05
     gamma : float or None
         If specified, then use this gamma to compute the general prior form,
         p ~ gamma^N.  If gamma is specified, p0 is ignored.
@@ -46,10 +48,6 @@ class Events(object):
         else:
             # eq. 21 from Scargle 2012
             return 4 - np.log(73.53 * self.p0 * (N ** -0.478))
-
-    def p0_prior(self, N, Ntot):
-        # eq. 21 from Scargle 2012
-        return 4 - np.log(73.53 * self.p0 * (N ** -0.478))
 
     def gamma_prior(self, N, Ntot):
         """Basic prior, parametrized by gamma (eq. 3 in Scargle 2012)"""
