@@ -233,21 +233,32 @@ exception if used with &#8216;stacked&#8217; option.</p>
 <li><dl class="first docutils">
 <dt>ax (matplotlib axes instance):</dt>
 <dd>Specify the Axes on which to draw the histogram.  If not specified, then the current
-active axes will be used, or a new axes instance will be generated.</dd>
+active axes will be used, or a new axes instance will be generated.<p class="last">Defaults to current axis.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>err_style (&#8216;band&#8217; or &#8216;line&#8217;):</dt>
-<dd>Draw style for errorbars. Defaults depend on <cite>histtype</cite>,
+<dd>Draw style for errorbars.<p class="last">Defaults depend on <cite>histtype</cite>,
 where histtype=&#8217;stepfilled&#8217; corresponds to &#8216;band&#8217;, and all others correspond to
-&#8216;line&#8217;.</dd>
+&#8216;line&#8217;.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>err_color (&#8216;auto&#8217; or valid <cite>matplotlib</cite> colors):  Color for error bars.  If &#8216;auto&#8217; is</dt>
-<dd>chosen and <cite>stacked</cite> is False, The color will be a slightly darker version of the
+<dt>err_color (&#8216;auto&#8217; or valid <cite>matplotlib</cite> colors):</dt>
+<dd>Color for error bars.  If &#8216;auto&#8217; is
+chosen and <cite>stacked</cite> is False, The color will be a slightly darker version of the
 associated histogram color.  If <cite>stacked</cite> is True, color will be the next in the
 current color cycle.<p class="last">Defaults to &#8216;auto&#8217;.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>err_type (&#8216;sumW2&#8217; or &#8216;gaussian&#8217;):</dt>
+<dd>Method of calculating error bars, if no error is given.  The &#8216;gaussian&#8217; method
+displays the error of each bin as the square root of the bin content.   The &#8216;sumW2&#8217;
+method displays the error as the square of the sum of the squares of the weights.<p class="last">Defaults to &#8216;gaussian&#8217; if no weights are given, else &#8216;sumW2&#8217;.</p>
 </dd>
 </dl>
 </li>
