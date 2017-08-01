@@ -223,13 +223,20 @@
 
 <span class="sd">            Defaults to &#39;stepfilled&#39;.</span>
 
-<span class="sd">        **kwargs :</span>
-
+<span class="sd">        **kwargs:</span>
 <span class="sd">            * ax (matplotlib axes instance):</span>
-<span class="sd">                Specify the Axes on which to draw the histogram.  If</span>
-<span class="sd">                not specified, then the current active axes will be used, or a new axes instance</span>
-<span class="sd">                will be generated.</span>
-<span class="sd">            * err_style (&#39;band&#39; or &#39;line&#39;): Draw style for errorbars.</span>
+<span class="sd">                Specify the Axes on which to draw the histogram.  If not specified, then the current</span>
+<span class="sd">                active axes will be used, or a new axes instance will be generated.</span>
+<span class="sd">            * err_style (&#39;band&#39; or &#39;line&#39;):</span>
+<span class="sd">                Draw style for errorbars. Defaults depend on `histtype`,</span>
+<span class="sd">                where histtype=&#39;stepfilled&#39; corresponds to &#39;band&#39;, and all others correspond to</span>
+<span class="sd">                &#39;line&#39;.</span>
+<span class="sd">            * err_color (&#39;auto&#39; or valid `matplotlib` colors):  Color for error bars.  If &#39;auto&#39; is</span>
+<span class="sd">                chosen and `stacked` is False, The color will be a slightly darker version of the</span>
+<span class="sd">                associated histogram color.  If `stacked` is True, color will be the next in the</span>
+<span class="sd">                current color cycle.</span>
+
+<span class="sd">                Defaults to &#39;auto&#39;.</span>
 
 <span class="sd">        Other keyword arguments are described in `pylab.hist()`.</span>
 
