@@ -95,16 +95,30 @@ def hist(x, bins='auto', range=None, weights=None, errorbars=False, normed=False
             * ax (matplotlib axes instance):
                 Specify the Axes on which to draw the histogram.  If not specified, then the current
                 active axes will be used, or a new axes instance will be generated.
+
+                Defaults to current axis.
+
             * err_style ('band' or 'line'):
-                Draw style for errorbars. Defaults depend on `histtype`,
+                Draw style for errorbars.
+
+                Defaults depend on `histtype`,
                 where histtype='stepfilled' corresponds to 'band', and all others correspond to
                 'line'.
-            * err_color ('auto' or valid `matplotlib` colors):  Color for error bars.  If 'auto' is
+
+            * err_color ('auto' or valid `matplotlib` colors):
+                Color for error bars.  If 'auto' is
                 chosen and `stacked` is False, The color will be a slightly darker version of the
                 associated histogram color.  If `stacked` is True, color will be the next in the
                 current color cycle.
 
                 Defaults to 'auto'.
+
+            * err_type ('sumW2' or 'gaussian'):
+               Method of calculating error bars, if no error is given.  The 'gaussian' method
+               displays the error of each bin as the square root of the bin content.   The 'sumW2'
+               method displays the error as the square of the sum of the squares of the weights.
+
+               Defaults to 'gaussian' if no weights are given, else 'sumW2'.
 
         Other keyword arguments are described in `pylab.hist()`.
 
