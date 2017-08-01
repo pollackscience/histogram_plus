@@ -92,6 +92,7 @@ def hist(x, bins='auto', range=None, weights=None, errorbars=False, normed=False
             Defaults to 'stepfilled'.
 
         **kwargs :
+
             * ax (matplotlib axes instance):
                 Specify the Axes on which to draw the histogram.  If
                 not specified, then the current active axes will be used, or a new axes instance
