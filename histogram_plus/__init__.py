@@ -1,1 +1,1 @@
-from hist_funcs import hist
+from .hist_funcs import hist

@@ -8,8 +8,9 @@ from collections import Iterable
 import colorsys
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib import colors
+from matplotlib import colors, gridspec
 import matplotlib.cbook as cbook
+from matplotlib.ticker import MaxNLocator
 import pandas as pd
 
 # from astroML.density_estimation import knuth_bin_width
@@ -130,15 +131,15 @@ def hist(x, bins='auto', range=None, weights=None, errorbars=False, normed=False
     # Generate a histogram object
 
     hist_con = HistContainer(x, bins, range, weights, errorbars, normed, scale, stacked,
-                             histtype, kwargs)
+                             histtype, **kwargs)
 
     return hist_con.bin_content, hist_con.bin_edges, hist_con.vis_object
 
 
 class HistContainer(object):
     """Class to hold histogram properties and members."""
-    def __init__(self, x, bins, range, weights, errorbars, normed, scale, stacked, histtype,
-                 kwargs):
+    def __init__(self, x, bins='auto', range=None, weights=None, errorbars=False, normed=False,
+                 scale=None, stacked=False, histtype='stepfilled', **kwargs):
 
         if weights is None:
             self.has_weights = False
@@ -287,6 +288,10 @@ class HistContainer(object):
 
         if 'linewidth' not in self.hist_dict and self.histtype == 'step':
             self.hist_dict['linewidth'] = 2
+
+        if 'log' in self.hist_dict and self.hist_dict['log'] is True and self.histtype == 'marker':
+            self.hist_dict.pop('log')
+            self.ax.set_yscale("log", nonposy='clip')
 
     def _df_binning_init(self, data, weights):
         '''Do an initial binning to get bin edges, total hist range, and break each set of data and
@@ -612,3 +617,56 @@ def poisson_error(bin_content, suppress_zero=False):
         return error_dict[bin_content]
     else:
         return (np.sqrt(bin_content), np.sqrt(bin_content))
+
+
+def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, err_style='band',
+               err_color='red', ratio_mode='default', grid=False, unity_line='red'):
+    '''Function for creating ratio plots (comparing two histograms by dividing their bin content).
+    The call structure is very similar to producing two individual histograms, with additional
+    arguments specifying the nature of the ratio plot.  The number of bins and ranges for both
+    histograms must be equal.'''
+
+    bin_range = range
+    del range
+
+    ratlims = (0, 2.5)
+
+    # bins, bin_range, ratio_range = _check_args_ratio(hist_dict1, hist_dict2, kwargs)
+
+    fig = plt.figure()
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
+    ax1 = fig.add_subplot(gs[0])
+    ax2 = fig.add_subplot(gs[1], sharex=ax1)
+    ax1.grid(True)
+    ax2.grid(True)
+    plt.setp(ax1.get_xticklabels(), visible=False)
+    fig.subplots_adjust(hspace=0.001)
+    ax1.set_xlim(bin_range)
+
+    hist_dict1['ax'] = ax1
+    hist_dict2['ax'] = ax1
+
+    hist_con1 = HistContainer(**hist_dict1)
+    hist_con2 = HistContainer(**hist_dict2)
+
+    ax1.legend()
+
+    ratio = hist_con1.bin_content/hist_con2.bin_content
+
+    ratio_err_up = [poisson_error(i)[1] for i in hist_con1.bin_content]/hist_con2.bin_content
+    ratio_err_down = [poisson_error(i)[0] for i in hist_con1.bin_content]/hist_con2.bin_content
+
+    fill_between_steps(ax2, hist_con1.bin_edges, ratio+ratio_err_up, ratio-ratio_err_down,
+                       step_where='pre', linewidth=0, color=err_color, alpha=0.2, zorder=10)
+
+    ax2.errorbar(hist_con1.bin_centers, ratio, yerr=None,
+                 xerr=[hist_con1.bin_centers-hist_con1.bin_edges[0:-1],
+                       hist_con1.bin_edges[1:]-hist_con1.bin_centers], fmt='ok')
+
+    ax2.set_xlabel(r'$M_{\mu\mu}$ (GeV)', fontsize=17)
+    ax2.set_ylabel('Data/BG', fontsize=17)
+    ax1.set_ylabel(r'N/$\Delta$x', fontsize=17)
+    ax2.get_yaxis().get_major_formatter().set_useOffset(False)
+    ax2.axhline(1, linewidth=2, color=err_color)
+    ax2.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='upper'))
+    ax2.set_ylim(ratlims)
