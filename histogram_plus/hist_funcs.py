@@ -631,25 +631,29 @@ def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, 
 
     ratlims = (0, 2.5)
 
-    # bins, bin_range, ratio_range = _check_args_ratio(hist_dict1, hist_dict2, kwargs)
+    bins, bin_range = _check_args_ratio(hist_dict1, hist_dict2, bins, bin_range)
+    hist_dict1['bins'] = bins
+    hist_dict1['range'] = bin_range
 
     fig = plt.figure()
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
     ax1 = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    ax1.grid(True)
-    ax2.grid(True)
+    # ax1.grid(True)
+    # ax2.grid(True)
     plt.setp(ax1.get_xticklabels(), visible=False)
     fig.subplots_adjust(hspace=0.001)
-    ax1.set_xlim(bin_range)
 
     hist_dict1['ax'] = ax1
     hist_dict2['ax'] = ax1
 
     hist_con1 = HistContainer(**hist_dict1)
+    bin_edges = hist_con1.bin_edges
+    bin_range = (bin_edges[0], bin_edges[-1])
+    hist_dict2['bins'] = bin_edges
+    hist_dict2['range'] = bin_range
     hist_con2 = HistContainer(**hist_dict2)
-
-    ax1.legend()
+    ax1.set_xlim(bin_range)
 
     ratio = hist_con1.bin_content/hist_con2.bin_content
 
@@ -665,8 +669,46 @@ def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, 
 
     ax2.set_xlabel(r'$M_{\mu\mu}$ (GeV)', fontsize=17)
     ax2.set_ylabel('Data/BG', fontsize=17)
-    ax1.set_ylabel(r'N/$\Delta$x', fontsize=17)
+    ax1.set_ylabel(r'N/$\Delta$x', fontsize=20)
     ax2.get_yaxis().get_major_formatter().set_useOffset(False)
-    ax2.axhline(1, linewidth=2, color=err_color)
+    if unity_line:
+        ax2.axhline(1, linewidth=2, color=unity_line)
     ax2.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='upper'))
     ax2.set_ylim(ratlims)
+
+    return (ax1, ax2), (hist_con1.bin_content, hist_con1.bin_edges, hist_con1.vis_object), \
+        (hist_con2.bin_content, hist_con2.bin_edges, hist_con2.vis_object)
+
+
+def _check_args_ratio(hist_dict1, hist_dict2, bins, bin_range):
+
+    # check that 'bins' is not conflicting
+    if bins is not None:
+        _bins = bins
+    elif 'bins' in hist_dict1:
+        _bins = hist_dict1['bins']
+    elif 'bins' in hist_dict2:
+        _bins = hist_dict2['bins']
+    else:
+        _bins = 'auto'
+
+    if (('bins' in hist_dict1 and hist_dict1['bins'] != _bins) or
+            ('bins' in hist_dict2 and hist_dict2['bins'] != _bins)):
+        raise KeyError('`bins` arg is inconsistent.  All declared `bins` args must be equal')
+
+    # check that 'range' is not conflicting
+
+    if bin_range is not None:
+        _bin_range = bin_range
+    elif 'range' in hist_dict1:
+        _bin_range = hist_dict1['range']
+    elif 'range' in hist_dict2:
+        _bin_range = hist_dict2['range']
+    else:
+        _bin_range = None
+
+    if (('range' in hist_dict1 and hist_dict1['range'] != _bin_range) or
+            ('range' in hist_dict2 and hist_dict2['range'] != _bin_range)):
+        raise KeyError('`range` arg is inconsistent.  All declared `range` args must be equal')
+
+    return _bins, _bin_range
