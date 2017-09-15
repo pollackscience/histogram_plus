@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colors, gridspec
 import matplotlib.cbook as cbook
 from matplotlib.ticker import MaxNLocator
+from matplotlib.patches import Polygon
 import pandas as pd
 
 # from astroML.density_estimation import knuth_bin_width
@@ -258,7 +259,7 @@ class HistContainer(object):
 
         # tweak histogram styles for `band` err_style
 
-        if self.err_dict['err_style'] == 'band' and self.errorbars:
+        if self.err_dict['err_style'] == 'band' and self.errorbars and not self.stacked:
             if 'edgecolor' not in kwargs:
                 kwargs['edgecolor'] = 'k'
             if 'linewidth' not in kwargs:
@@ -364,13 +365,16 @@ class HistContainer(object):
         if self.histtype == 'marker':
             self.bin_content, _ = np.histogram(data, self.bin_edges, weights=weights,
                                                range=self.bin_range)
-            # self.vis_object = self.ax.plot(self.bin_centers, self.bin_content, **self.hist_dict)
         else:
             self.bin_content, _, self.vis_object = self.ax.hist(data, self.bin_edges,
                                                                 weights=weights,
                                                                 range=self.bin_range,
                                                                 stacked=self.stacked,
                                                                 **self.hist_dict)
+
+            # if self.stacked and self.errorbars and self.histtype == 'stepfilled':
+            #     plt.setp(self.vis_object[-1][0], edgecolor='k')
+            #     plt.setp(self.vis_object[-1][0], linewidth=2)
 
         self.bin_content_orig = self.bin_content[:]
 
@@ -548,6 +552,12 @@ class HistContainer(object):
                                        color=err_color, alpha=self.hist_dict['alpha']*0.8,
                                        zorder=10)
 
+                    if self.stacked:
+                        poly_patch = self.vis_object[-1][0].get_xy()
+                        self.ax.add_patch(Polygon(poly_patch[:(len(poly_patch)+1)//2], closed=False,
+                                          facecolor='none', edgecolor='k', linewidth=2, alpha=0.5,
+                                                  zorder=0))
+
     def redraw(self):
         self.bc_scales = np.divide(self.bin_content, self.bin_content_orig)
         self.do_redraw = False
@@ -629,8 +639,6 @@ def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, 
     bin_range = range
     del range
 
-    ratlims = (0, 2.5)
-
     bins, bin_range = _check_args_ratio(hist_dict1, hist_dict2, bins, bin_range)
     hist_dict1['bins'] = bins
     hist_dict1['range'] = bin_range
@@ -655,26 +663,42 @@ def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, 
     hist_con2 = HistContainer(**hist_dict2)
     ax1.set_xlim(bin_range)
 
-    ratio = hist_con1.bin_content/hist_con2.bin_content
+    if hist_con1.stacked:
+        bc1 = hist_con1.bin_content[-1]
+    else:
+        bc1 = hist_con1.bin_content
+    if hist_con2.stacked:
+        bc2 = hist_con2.bin_content[-1]
+    else:
+        bc2 = hist_con2.bin_content
 
-    ratio_err_up = [poisson_error(i)[1] for i in hist_con1.bin_content]/hist_con2.bin_content
-    ratio_err_down = [poisson_error(i)[0] for i in hist_con1.bin_content]/hist_con2.bin_content
+    berr1 = getattr(hist_con1, 'bin_err', np.sqrt(bc1))
+    print(berr1)
+    berr2 = getattr(hist_con2, 'bin_err', np.sqrt(bc2))
+    print(berr2)
 
-    fill_between_steps(ax2, hist_con1.bin_edges, ratio+ratio_err_up, ratio-ratio_err_down,
+    ratio = bc1/bc2
+
+    ratio_err = ratio*np.sqrt((berr1/bc1)**2+(berr2/bc2)**2)
+
+    fill_between_steps(ax2, hist_con1.bin_edges, ratio+ratio_err, ratio-ratio_err,
                        step_where='pre', linewidth=0, color=err_color, alpha=0.2, zorder=10)
 
     ax2.errorbar(hist_con1.bin_centers, ratio, yerr=None,
                  xerr=[hist_con1.bin_centers-hist_con1.bin_edges[0:-1],
-                       hist_con1.bin_edges[1:]-hist_con1.bin_centers], fmt='ok')
+                       hist_con1.bin_edges[1:]-hist_con1.bin_centers], fmt='dk')
 
     ax2.set_xlabel(r'$M_{\mu\mu}$ (GeV)', fontsize=17)
     ax2.set_ylabel('Data/BG', fontsize=17)
     ax1.set_ylabel(r'N/$\Delta$x', fontsize=20)
     ax2.get_yaxis().get_major_formatter().set_useOffset(False)
     if unity_line:
-        ax2.axhline(1, linewidth=2, color=unity_line)
+        ax2.axhline(1, linewidth=3, color=unity_line, zorder=0)
     ax2.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='upper'))
-    ax2.set_ylim(ratlims)
+    if ratio_range:
+        ax2.set_ylim(ratio_range)
+    else:
+        ax2.set_ylim((0, 2.5))
 
     return (ax1, ax2), (hist_con1.bin_content, hist_con1.bin_edges, hist_con1.vis_object), \
         (hist_con2.bin_content, hist_con2.bin_edges, hist_con2.vis_object)
