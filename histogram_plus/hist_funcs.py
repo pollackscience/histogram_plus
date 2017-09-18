@@ -249,7 +249,7 @@ class HistContainer(object):
         if 'suppress_zero' in kwargs:
             self.err_dict['suppress_zero'] = kwargs.pop('suppress_zero')
         else:
-            self.err_dict['suppress_zero'] = True
+            self.err_dict['suppress_zero'] = False
         if 'err_type' in kwargs:
             self.err_dict['err_type'] = kwargs.pop('err_type')
         elif self.has_weights:
@@ -290,7 +290,11 @@ class HistContainer(object):
         if 'linewidth' not in self.hist_dict and self.histtype == 'step':
             self.hist_dict['linewidth'] = 2
 
-        if 'log' in self.hist_dict and self.hist_dict['log'] is True and self.histtype == 'marker':
+        if 'log' in self.hist_dict and self.hist_dict['log'] is True:
+            self.logy = True
+        else:
+            self.logy = False
+        if self.logy and self.histtype == 'marker':
             self.hist_dict.pop('log')
             self.ax.set_yscale("log", nonposy='clip')
 
@@ -473,7 +477,11 @@ class HistContainer(object):
                 bin_err_tmp = bin_err_tmp[-1]
 
             elif self.err_dict['err_type'] == 'poisson':
-                pass
+                err_low = np.asarray([poisson_error(bc, self.err_dict['suppress_zero'])[0] for bc in
+                                      bin_content_no_norm])
+                err_hi = np.asarray([poisson_error(bc, self.err_dict['suppress_zero'])[1] for bc in
+                                     bin_content_no_norm])
+                bin_err_tmp = np.asarray([err_low, err_hi])
 
             else:
                 raise KeyError('`err_type: {}` not implemented'.format(self.err_dict['err_type']))
@@ -599,10 +607,20 @@ class HistContainer(object):
                         xy[j+1, 1] = bc
                         xy[j+2, 1] = bc
                         j += 2
+                    if self.logy:
+                        min_val = min(xy[:, 1])*0.1
+                        # xy[0, 1] = min_val
+                        j = 0
+                        for bc in bin_content[n]:
+                            xy[j-1, 1] = min_val
+                            xy[j-2, 1] = min_val
+                            j -= 2
                     plt.setp(vis_object[n][0], 'xy', xy)
 
         self.ax.relim()
         self.ax.autoscale_view(False, False, True)
+        if self.logy:
+            self.ax.set_ylim(min_val, self.ax.get_ylim()[1])
 
 
 def poisson_error(bin_content, suppress_zero=False):
@@ -630,7 +648,8 @@ def poisson_error(bin_content, suppress_zero=False):
 
 
 def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, err_style='band',
-               err_color='red', ratio_mode='default', grid=False, unity_line='red'):
+               err_color='xkcd:gunmetal', ratio_mode='default', grid=False, unity_line='red',
+               logx=False):
     '''Function for creating ratio plots (comparing two histograms by dividing their bin content).
     The call structure is very similar to producing two individual histograms, with additional
     arguments specifying the nature of the ratio plot.  The number of bins and ranges for both
@@ -646,6 +665,8 @@ def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, 
     fig = plt.figure()
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
     ax1 = fig.add_subplot(gs[0])
+    if logx:
+        ax1.set_xscale("log", nonposy='clip')
     ax2 = fig.add_subplot(gs[1], sharex=ax1)
     # ax1.grid(True)
     # ax2.grid(True)
@@ -672,33 +693,31 @@ def ratio_plot(hist_dict1, hist_dict2, bins=None, range=None, ratio_range=None, 
     else:
         bc2 = hist_con2.bin_content
 
-    berr1 = getattr(hist_con1, 'bin_err', np.sqrt(bc1))
-    print(berr1)
-    berr2 = getattr(hist_con2, 'bin_err', np.sqrt(bc2))
-    print(berr2)
+    berr1 = getattr(hist_con1, 'bin_err', np.zeros(len(bc1)))
+    berr2 = getattr(hist_con2, 'bin_err', np.zeros(len(bc2)))
 
     ratio = bc1/bc2
-
     ratio_err = ratio*np.sqrt((berr1/bc1)**2+(berr2/bc2)**2)
+    ratio_err_hi = ratio + ratio_err
+    ratio_err_low = ratio - ratio_err
 
-    fill_between_steps(ax2, hist_con1.bin_edges, ratio+ratio_err, ratio-ratio_err,
+    ratio[ratio == 0] = np.nan
+
+    fill_between_steps(ax2, hist_con1.bin_edges, ratio_err_hi, ratio_err_low,
                        step_where='pre', linewidth=0, color=err_color, alpha=0.2, zorder=10)
 
     ax2.errorbar(hist_con1.bin_centers, ratio, yerr=None,
                  xerr=[hist_con1.bin_centers-hist_con1.bin_edges[0:-1],
-                       hist_con1.bin_edges[1:]-hist_con1.bin_centers], fmt='dk')
+                       hist_con1.bin_edges[1:]-hist_con1.bin_centers], fmt='d',
+                 color='xkcd:gunmetal')
 
-    ax2.set_xlabel(r'$M_{\mu\mu}$ (GeV)', fontsize=17)
-    ax2.set_ylabel('Data/BG', fontsize=17)
-    ax1.set_ylabel(r'N/$\Delta$x', fontsize=20)
-    ax2.get_yaxis().get_major_formatter().set_useOffset(False)
     if unity_line:
         ax2.axhline(1, linewidth=3, color=unity_line, zorder=0)
-    ax2.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='upper'))
+    ax2.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='upper'))
     if ratio_range:
         ax2.set_ylim(ratio_range)
     else:
-        ax2.set_ylim((0, 2.5))
+        ax2.set_ylim((0, 2.0))
 
     return (ax1, ax2), (hist_con1.bin_content, hist_con1.bin_edges, hist_con1.vis_object), \
         (hist_con2.bin_content, hist_con2.bin_edges, hist_con2.vis_object)
