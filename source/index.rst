@@ -23,6 +23,8 @@ Contents:
    _static/hist_example.ipynb
    features
    _static/errorbars.ipynb
+   blocks
+   _static/ratio.ipynb
 
 
 

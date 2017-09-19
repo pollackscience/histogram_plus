@@ -480,8 +480,8 @@ class HistContainer(object):
                 bin_err_tmp = bin_err_tmp[-1]
 
             elif self.err_dict['err_type'] == 'poisson':
-                err_low = np.asarray([poisson_error(bc, self.err_dict['suppress_zero'])[0] for bc in
-                                      bin_content_no_norm])
+                err_low = np.asarray([poisson_error(bc, self.err_dict['suppress_zero'])[0] for bc
+                                      in bin_content_no_norm])
                 err_hi = np.asarray([poisson_error(bc, self.err_dict['suppress_zero'])[1] for bc in
                                      bin_content_no_norm])
                 bin_err_tmp = np.asarray([err_low, err_hi])
@@ -566,7 +566,7 @@ class HistContainer(object):
                     if self.stacked:
                         poly_patch = self.vis_object[-1][0].get_xy()
                         self.ax.add_patch(Polygon(poly_patch[:(len(poly_patch)+1)//2], closed=False,
-                                          facecolor='none', edgecolor='k', linewidth=2, alpha=0.5,
+                                          facecolor='none', edgecolor='k', linewidth=1, alpha=0.5,
                                                   zorder=0))
 
     def redraw(self):

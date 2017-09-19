@@ -7,6 +7,7 @@ common use-cases typically seen in High Energy Physics, they can be useful for a
 wants improved visualization and analysis methods for histograms.
 
 The following additional features are included in this package:
+
 #. Bayesian Blocks binning algorithm.
 #. Automatic errorbar calculation.
 #. Marker draw-style.
