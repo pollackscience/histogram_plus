@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -32,8 +34,10 @@
   
 
   
-    <link rel="top" title="histogram_plus 0.1 documentation" href="index.html"/>
-        <link rel="prev" title="Simple Example" href="_static/hist_example.html"/> 
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="histogram_plus 0.1 documentation" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -42,6 +46,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -82,9 +87,13 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="_static/hist_example.html">Simple Example</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#"><cite>hist</cite> Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_static/errorbars.html">Error Bars</a></li>
 </ul>
 
             
@@ -97,8 +106,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">histogram_plus</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">histogram_plus</a>
+        
       </nav>
 
 
@@ -107,23 +118,40 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li><cite>hist</cite> Function</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li><cite>hist</cite> Function</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="_sources/hist.txt" rel="nofollow"> View page source</a>
+            
+            <a href="_sources/hist.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -178,58 +206,58 @@ the majority of work.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x</strong> (<em>array_like, or list of array_like</em>) &#8211; Array of data to be histogrammed.</li>
-<li><strong>bins</strong> (<em>int or List or str, optional</em>) &#8211; <p>If <cite>int</cite>, <cite>bins</cite> number of equal-width bins are
+<li><strong>x</strong> (<em>array_like</em><em>, or </em><em>list of array_like</em>) – Array of data to be histogrammed.</li>
+<li><strong>bins</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em> or </em><em>List</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em>, </em><em>optional</em>) – <p>If <cite>int</cite>, <cite>bins</cite> number of equal-width bins are
 generated.  The width is determined by either equal divison of the given <cite>range</cite>, or
 equal division between the first and last data point if no <cite>range</cite> is specified.</p>
 <p>If <cite>List</cite>, bin edges are taken directly from <cite>List</cite> (can be unequal width).</p>
 <dl class="docutils">
 <dt>If <cite>str</cite>, then it must be one of</dt>
-<dd>&#8216;blocks&#8217; : use bayesian blocks for dynamic bin widths.<p class="last">&#8216;auto&#8217; : use <cite>auto</cite> feature from numpy.histogram.</p>
+<dd>’blocks’ : use bayesian blocks for dynamic bin widths.<p class="last">’auto’ : use <cite>auto</cite> feature from numpy.histogram.</p>
 </dd>
 </dl>
-<p>Defaults to &#8216;auto&#8217;.</p>
+<p>Defaults to ‘auto’.</p>
 </li>
-<li><strong>range</strong> (<em>tuple or None, optional</em>) &#8211; <p>If specificed, data will only be considered and shown
+<li><strong>range</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a><em>, </em><em>optional</em>) – <p>If specificed, data will only be considered and shown
 for the range given.  Otherwise, <cite>range</cite> will be between the highest and lowest
 datapoint.</p>
 <p>Defaults to None.</p>
 </li>
-<li><strong>weights</strong> (<em>array_like or None, optional</em>) &#8211; <p>Weights associated with each data point.  If
+<li><strong>weights</strong> (<em>array_like</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a><em>, </em><em>optional</em>) – <p>Weights associated with each data point.  If
 specified, bin content will be equal to the sum of all relevant weights.</p>
 <p>Defaults to None.</p>
 </li>
-<li><strong>errorbars</strong> (<em>boolean or array_like, optional</em>) &#8211; <p>If True, errorbars will be calculated and
+<li><strong>errorbars</strong> (<em>boolean</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – <p>If True, errorbars will be calculated and
 displayed based on the <cite>err_*</cite> arguments. The errorbars will be appropriately
 modified if <cite>scale</cite> and/or <cite>normed</cite> is True. If an array is specificed, those values
 will be used (and will not be modifed by any other methods).</p>
 <p>Defaults to False.</p>
 </li>
-<li><strong>normed</strong> (<em>boolean, optional</em>) &#8211; <p>If True, histogram will be normalized such that the integral
+<li><strong>normed</strong> (<em>boolean</em><em>, </em><em>optional</em>) – <p>If True, histogram will be normalized such that the integral
 over all bins with be equal to 1.  In general, this will NOT mean that the sum of all
 bin contents will be 1, unless all bin widths are equal to 1. If used with <cite>scale</cite>
 option, normalization happens before scale.</p>
 <p>Defaults to False</p>
 </li>
-<li><strong>scale</strong> (<em>Number or 'binwidth', optional</em>) &#8211; <p>If Number, all bin contents are multiplied by the
-given value.  If &#8216;binwidth&#8217;, every bin content is divided by the bin width. If used with
-<cite>normed</cite> option, scaling occurs after normalization (&#8216;binwidth&#8217; will be ignored in this
+<li><strong>scale</strong> (<em>Number</em><em> or </em><em>'binwidth'</em><em>, </em><em>optional</em>) – <p>If Number, all bin contents are multiplied by the
+given value.  If ‘binwidth’, every bin content is divided by the bin width. If used with
+<cite>normed</cite> option, scaling occurs after normalization (‘binwidth’ will be ignored in this
 case, because it is handled automatically when normalizing).</p>
 <p>Defaults to None</p>
 </li>
-<li><strong>stacked</strong> (<em>boolean, optional</em>) &#8211; <p>If True, multiple input data sets will be layered on top of
+<li><strong>stacked</strong> (<em>boolean</em><em>, </em><em>optional</em>) – <p>If True, multiple input data sets will be layered on top of
 each other, such that the height of each bin is the sum of all the relevant dataset
 contributions.  If used with errorbars, the bars will be associated with the bin totals,
 not the individual components.</p>
 <p>Defaults to False.</p>
 </li>
-<li><strong>histtype</strong> (<em>stepfilled', 'step', 'bar', or 'marker'</em>) &#8211; <p>Draw options for histograms.
-&#8216;stepfilled&#8217;, &#8216;step&#8217;, and &#8216;bar&#8217; inherit from <cite>matplotlib</cite>.  &#8216;marker&#8217; places a single
-point at the center of each bin (best used with error bars).  &#8216;marker&#8217; will throw an
-exception if used with &#8216;stacked&#8217; option.</p>
-<p>Defaults to &#8216;stepfilled&#8217;.</p>
+<li><strong>histtype</strong> (<em>stepfilled'</em><em>, </em><em>'step'</em><em>, </em><em>'bar'</em><em>, or </em><em>'marker'</em>) – <p>Draw options for histograms.
+‘stepfilled’, ‘step’, and ‘bar’ inherit from <cite>matplotlib</cite>.  ‘marker’ places a single
+point at the center of each bin (best used with error bars).  ‘marker’ will throw an
+exception if used with ‘stacked’ option.</p>
+<p>Defaults to ‘stepfilled’.</p>
 </li>
-<li><strong>**kwargs</strong> &#8211; <ul>
+<li><strong>**kwargs</strong> – <ul>
 <li><dl class="first docutils">
 <dt>ax (matplotlib axes instance):</dt>
 <dd>Specify the Axes on which to draw the histogram.  If not specified, then the current
@@ -238,33 +266,33 @@ active axes will be used, or a new axes instance will be generated.<p class="las
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>err_style (&#8216;band&#8217; or &#8216;line&#8217;):</dt>
+<dt>err_style (‘band’ or ‘line’):</dt>
 <dd>Draw style for errorbars.<p class="last">Defaults depend on <cite>histtype</cite>,
-where histtype=&#8217;stepfilled&#8217; corresponds to &#8216;band&#8217;, and all others correspond to
-&#8216;line&#8217;.</p>
+where histtype=’stepfilled’ corresponds to ‘band’, and all others correspond to
+‘line’.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>err_color (&#8216;auto&#8217; or valid <cite>matplotlib</cite> colors):</dt>
-<dd>Color for error bars.  If &#8216;auto&#8217; is
+<dt>err_color (‘auto’ or valid <cite>matplotlib</cite> colors):</dt>
+<dd>Color for error bars.  If ‘auto’ is
 chosen and <cite>stacked</cite> is False, The color will be a slightly darker version of the
 associated histogram color.  If <cite>stacked</cite> is True, color will be the next in the
-current color cycle.<p class="last">Defaults to &#8216;auto&#8217;.</p>
+current color cycle.<p class="last">Defaults to ‘auto’.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>err_type (&#8216;sumW2&#8217; or &#8216;gaussian&#8217;):</dt>
-<dd>Method of calculating error bars, if no error is given.  The &#8216;gaussian&#8217; method
-displays the error of each bin as the square root of the bin content.   The &#8216;sumW2&#8217;
-method displays the error as the square of the sum of the squares of the weights.<p class="last">Defaults to &#8216;gaussian&#8217; if no weights are given, else &#8216;sumW2&#8217;.</p>
+<dt>err_type (‘sumW2’ or ‘gaussian’):</dt>
+<dd>Method of calculating error bars, if no error is given.  The ‘gaussian’ method
+displays the error of each bin as the square root of the bin content.   The ‘sumW2’
+method displays the error as the square of the sum of the squares of the weights.<p class="last">Defaults to ‘gaussian’ if no weights are given, else ‘sumW2’.</p>
 </dd>
 </dl>
 </li>
 </ul>
 </li>
-<li><strong>keyword arguments are described in pylab.hist().</strong> (<em>Other</em>) &#8211; </li>
+<li><strong>keyword arguments are described in pylab.hist</strong><strong>(</strong><strong>)</strong><strong></strong> (<em>Other</em>) – </li>
 </ul>
 </td>
 </tr>
@@ -277,15 +305,11 @@ method displays the error as the square of the sum of the squares of the weights
 
 
            </div>
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-      
-        <a href="_static/hist_example.html" class="btn btn-neutral" title="Simple Example" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
   
 
   <hr/>
@@ -317,13 +341,14 @@ method displays the error as the square of the sum of the squares of the weights
             VERSION:'0.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

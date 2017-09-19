@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -32,6 +34,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
     <link rel="top" title="histogram_plus 0.1 documentation" href="../../index.html"/>
         <link rel="up" title="Module code" href="../index.html"/> 
 
@@ -42,6 +47,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -82,9 +88,13 @@
           
             
             
-                <ul>
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../_static/hist_example.html">Simple Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../hist.html"><cite>hist</cite> Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_static/errorbars.html">Error Bars</a></li>
 </ul>
 
             
@@ -97,8 +107,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../../index.html">histogram_plus</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">histogram_plus</a>
+        
       </nav>
 
 
@@ -111,51 +123,70 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../../index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
           <li><a href="../index.html">Module code</a> &raquo;</li>
-      
-    <li>histogram_plus.hist_funcs</li>
+        
+      <li>histogram_plus.hist_funcs</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
   <h1>Source code for histogram_plus.hist_funcs</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">range</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="nb">zip</span>
 <span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Number</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Iterable</span>
-<span class="c"># import itertools</span>
+<span class="c1"># import itertools</span>
 <span class="kn">import</span> <span class="nn">colorsys</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">colors</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">colors</span><span class="p">,</span> <span class="n">gridspec</span>
 <span class="kn">import</span> <span class="nn">matplotlib.cbook</span> <span class="k">as</span> <span class="nn">cbook</span>
+<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="k">import</span> <span class="n">MaxNLocator</span>
+<span class="kn">from</span> <span class="nn">matplotlib.patches</span> <span class="k">import</span> <span class="n">Polygon</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="c"># from astroML.density_estimation import knuth_bin_width</span>
-<span class="c"># scotts_bin_width, freedman_bin_width,\</span>
+<span class="c1"># from astroML.density_estimation import knuth_bin_width</span>
+<span class="c1"># scotts_bin_width, freedman_bin_width,\</span>
 
 <span class="kn">from</span> <span class="nn">histogram_plus.bayesian_blocks_hep</span> <span class="k">import</span> <span class="n">bayesian_blocks</span>
 <span class="kn">from</span> <span class="nn">histogram_plus.fill_between_steps</span> <span class="k">import</span> <span class="n">fill_between_steps</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="hist"><a class="viewcode-back" href="../../hist.html#histogram_plus.hist_funcs.hist">[docs]</a><span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="s">&#39;auto&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="k">None</span><span class="p">,</span>
-         <span class="n">stacked</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="hist"><a class="viewcode-back" href="../../hist.html#histogram_plus.hist_funcs.hist">[docs]</a><span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+         <span class="n">stacked</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s1">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Enhanced histogram, based on `hist` function from matplotlib and astroML.</span>
 <span class="sd">    The main additional features are the ability to use data-driven binning algorithms,</span>
 <span class="sd">    the addition of errorbars, scaling options (like dividing all bin values by their</span>
@@ -259,179 +290,190 @@
 <span class="sd">    Brian Pollack, 2017</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c"># Generate a histogram object</span>
+    <span class="c1"># Generate a histogram object</span>
 
     <span class="n">hist_con</span> <span class="o">=</span> <span class="n">HistContainer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="nb">range</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">errorbars</span><span class="p">,</span> <span class="n">normed</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">stacked</span><span class="p">,</span>
-                             <span class="n">histtype</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+                             <span class="n">histtype</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">hist_con</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">hist_con</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">hist_con</span><span class="o">.</span><span class="n">vis_object</span></div>
 
 
 <span class="k">class</span> <span class="nc">HistContainer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class to hold histogram properties and members.&quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="nb">range</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">errorbars</span><span class="p">,</span> <span class="n">normed</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">stacked</span><span class="p">,</span> <span class="n">histtype</span><span class="p">,</span>
-                 <span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stacked</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s1">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
-        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span> <span class="o">=</span> <span class="k">False</span>
+        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span> <span class="o">=</span> <span class="k">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">x</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checks_and_wrangling</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
 
-        <span class="c"># Prevent hiding of builtins, define members from args</span>
+        <span class="c1"># Prevent hiding of builtins, define members from args</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span> <span class="o">=</span> <span class="nb">range</span>
         <span class="k">del</span> <span class="nb">range</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">=</span> <span class="n">bins</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">errorbars</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_err</span> <span class="o">=</span> <span class="n">errorbars</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">=</span> <span class="s">&#39;given&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">=</span> <span class="s1">&#39;given&#39;</span>
         <span class="k">elif</span> <span class="n">errorbars</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">=</span> <span class="s">&#39;calc&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">=</span> <span class="s1">&#39;calc&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">=</span> <span class="k">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">normed</span> <span class="o">=</span> <span class="n">normed</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span> <span class="o">=</span> <span class="n">stacked</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">=</span> <span class="n">histtype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_arg_init</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_df_binning_init</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="k">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">vis_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_centers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">draw_errorbars</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_checks_and_wrangling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
-        <span class="c"># Manage the input data in the same fashion as mpl</span>
+        <span class="c1"># Manage the input data in the same fashion as mpl</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
             <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
 
         <span class="n">input_empty</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
 
-        <span class="c"># Massage &#39;x&#39; for processing.</span>
+        <span class="c1"># Massage &#39;x&#39; for processing.</span>
         <span class="k">if</span> <span class="n">input_empty</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[]])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">cbook</span><span class="o">.</span><span class="n">_reshape_2D</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c"># number of datasets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># number of datasets</span>
 
-        <span class="c"># We need to do to &#39;weights&#39; what was done to &#39;x&#39;</span>
-        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="k">None</span><span class="p">:</span>
+        <span class="c1"># We need to do to &#39;weights&#39; what was done to &#39;x&#39;</span>
+        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">w</span> <span class="o">=</span> <span class="n">cbook</span><span class="o">.</span><span class="n">_reshape_2D</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="k">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;weights should have the same shape as x&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;weights should have the same shape as x&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="k">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">xi</span><span class="p">,</span> <span class="n">wi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">wi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="k">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">wi</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xi</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;weights should have the same shape as x&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">wi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">wi</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xi</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;weights should have the same shape as x&#39;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span>
 
     <span class="k">def</span> <span class="nf">_arg_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
-        <span class="c"># Break up the kwargs into different chunks depending on the arg, and set various defaults.</span>
+        <span class="c1"># Break up the kwargs into different chunks depending on the arg, and set various defaults.</span>
 
-        <span class="c"># Scaling by `binwidth` is handled by default during normalization</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normed</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">==</span> <span class="s">&#39;binwidth&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="k">None</span>
+        <span class="c1"># Scaling by `binwidth` is handled by default during normalization</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normed</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">==</span> <span class="s1">&#39;binwidth&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Do not stack with markers, that would be silly&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Do not stack with markers, that would be silly&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;`marker` histtype does not currently support multiple input datasets&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;`marker` histtype does not currently support multiple input datasets&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;barstacked&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span> <span class="o">=</span> <span class="k">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;barstacked&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="c"># Get current axis</span>
-        <span class="k">if</span> <span class="s">&#39;ax&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;ax&#39;</span><span class="p">)</span>
+        <span class="c1"># Get current axis</span>
+        <span class="k">if</span> <span class="s1">&#39;ax&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;ax&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
 
-        <span class="c"># Group arguments into different dicts</span>
-        <span class="c"># For error bars:</span>
+        <span class="c1"># Group arguments into different dicts</span>
+        <span class="c1"># For error bars:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;errorbars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span>
-        <span class="k">if</span> <span class="s">&#39;err_style&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;err_style&#39;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="s">&#39;bar&#39;</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;band&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;errorbars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span>
+        <span class="k">if</span> <span class="s1">&#39;err_style&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;err_style&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;band&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;line&#39;</span>
-        <span class="k">if</span> <span class="s">&#39;err_color&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;err_color&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;line&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;err_color&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;err_color&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;auto&#39;</span>
-        <span class="k">if</span> <span class="s">&#39;suppress_zero&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;suppress_zero&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;suppress_zero&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;suppress_zero&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;suppress_zero&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;suppress_zero&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;suppress_zero&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="k">True</span>
-        <span class="k">if</span> <span class="s">&#39;err_type&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;err_type&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;suppress_zero&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;err_type&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;err_type&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;sumW2&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;sumW2&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;gaussian&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;gaussian&#39;</span>
 
-        <span class="c"># tweak histogram styles for `band` err_style</span>
+        <span class="c1"># tweak histogram styles for `band` err_style</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;band&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s">&#39;edgecolor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;edgecolor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;k&#39;</span>
-            <span class="k">if</span> <span class="s">&#39;linewidth&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;linewidth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;band&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;edgecolor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;edgecolor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;k&#39;</span>
+            <span class="k">if</span> <span class="s1">&#39;linewidth&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;linewidth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
-        <span class="c"># For data-driven binning</span>
+        <span class="c1"># For data-driven binning</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bin_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">if</span> <span class="s">&#39;gamma&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">bin_dict</span><span class="p">[</span><span class="s">&#39;gamma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;gamma&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="s">&#39;p0&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">bin_dict</span><span class="p">[</span><span class="s">&#39;p0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;p0&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;gamma&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bin_dict</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;gamma&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;p0&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bin_dict</span><span class="p">[</span><span class="s1">&#39;p0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;p0&#39;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span> <span class="o">=</span> <span class="n">kwargs</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">!=</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s">&#39;histtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">!=</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;histtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span>
 
-        <span class="c"># set some marker defaults</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s">&#39;marker&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;o&#39;</span>
-            <span class="k">if</span> <span class="s">&#39;linestyle&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s">&#39;linestyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="c1"># set some marker defaults</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span>
+            <span class="k">if</span> <span class="s1">&#39;linestyle&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
-        <span class="k">if</span> <span class="s">&#39;alpha&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="k">if</span> <span class="s1">&#39;alpha&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;alpha&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;alpha&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
 
-        <span class="k">if</span> <span class="s">&#39;linewidth&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;step&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s">&#39;linewidth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="s1">&#39;linewidth&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;linewidth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="s1">&#39;log&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;log&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logy</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logy</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logy</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">nonposy</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_df_binning_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Do an initial binning to get bin edges, total hist range, and break each set of data and</span>
 <span class="sd">        weights into a dataframe (easier to handle errorbar calculation moving forward)&#39;&#39;&#39;</span>
 
-        <span class="c"># If bin edges are already determined, than skip initial histogramming</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span> <span class="o">=</span> <span class="k">None</span>
+        <span class="c1"># If bin edges are already determined, than skip initial histogramming</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
-        <span class="c"># If bin edges need to be determined, there&#39;s a few different cases to consider</span>
+        <span class="c1"># If bin edges need to be determined, there&#39;s a few different cases to consider</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
                 <span class="n">_n_data_sets</span> <span class="o">=</span> <span class="mi">1</span>
@@ -439,13 +481,13 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span><span class="p">:</span>
                     <span class="n">b_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">weights</span><span class="p">)]</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">b_weights</span> <span class="o">=</span> <span class="k">None</span>
+                    <span class="n">b_weights</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_n_data_sets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span>
                 <span class="n">b_data</span> <span class="o">=</span> <span class="n">data</span>
                 <span class="n">b_weights</span> <span class="o">=</span> <span class="n">weights</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">xmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
                 <span class="n">xmax</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_n_data_sets</span><span class="p">):</span>
@@ -454,20 +496,20 @@
                         <span class="n">xmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">xmax</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">b_data</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">)</span>
 
-            <span class="c"># Special case for Bayesian Blocks</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;block&#39;</span><span class="p">,</span> <span class="s">&#39;blocks&#39;</span><span class="p">]:</span>
+            <span class="c1"># Special case for Bayesian Blocks</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;block&#39;</span><span class="p">,</span> <span class="s1">&#39;blocks&#39;</span><span class="p">]:</span>
 
-                <span class="c"># Single data-set or stacked</span>
+                <span class="c1"># Single data-set or stacked</span>
                 <span class="k">if</span> <span class="n">_n_data_sets</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
 
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span><span class="p">:</span>
                         <span class="n">b_weights</span> <span class="o">=</span> <span class="n">b_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">b_weights</span> <span class="o">=</span> <span class="k">None</span>
+                        <span class="n">b_weights</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span> <span class="o">=</span> <span class="n">bayesian_blocks</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">b_data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="n">b_weights</span><span class="p">,</span>
                                                      <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_dict</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot use Bayesian Blocks with multiple, unstacked datasets&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot use Bayesian Blocks with multiple, unstacked datasets&#39;</span><span class="p">)</span>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">b_data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">b_weights</span><span class="p">,</span>
@@ -476,22 +518,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">widths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bin_centers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">widths</span><span class="o">*</span><span class="mf">0.5</span>
 
-        <span class="c"># Now put the data into dataframes with the weights and bins</span>
+        <span class="c1"># Now put the data into dataframes with the weights and bins</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
-                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s">&#39;data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]})</span>
+            <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]})</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s">&#39;data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s">&#39;weights&#39;</span><span class="p">:</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]})</span>
-            <span class="n">df_bins</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">include_lowest</span><span class="o">=</span><span class="k">True</span><span class="p">)</span>
-            <span class="n">df</span><span class="p">[</span><span class="s">&#39;bins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_bins</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s1">&#39;weights&#39;</span><span class="p">:</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]})</span>
+            <span class="n">df_bins</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">include_lowest</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">df</span><span class="p">[</span><span class="s1">&#39;bins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_bins</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 
-        <span class="c"># Make the initial histograms</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
+        <span class="c1"># Make the initial histograms</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
                                                <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">)</span>
-            <span class="c"># self.vis_object = self.ax.plot(self.bin_centers, self.bin_content, **self.hist_dict)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span>
                                                                 <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
@@ -499,29 +540,33 @@
                                                                 <span class="n">stacked</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">,</span>
                                                                 <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">)</span>
 
+            <span class="c1"># if self.stacked and self.errorbars and self.histtype == &#39;stepfilled&#39;:</span>
+            <span class="c1">#     plt.setp(self.vis_object[-1][0], edgecolor=&#39;k&#39;)</span>
+            <span class="c1">#     plt.setp(self.vis_object[-1][0], linewidth=2)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">bin_content_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">[:]</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s">&#39;calc&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normed</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s">&#39;default&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s1">&#39;calc&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normed</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="k">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_weights</span><span class="p">:</span>
             <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">weights</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
                 <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
-            <span class="n">weights</span> <span class="o">=</span> <span class="k">None</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="k">None</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">]</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
-                                               <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="k">True</span><span class="p">)</span>
+                                               <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
             <span class="n">total_bin_content</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span>
-                                                <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="k">True</span><span class="p">)</span>
+                                                <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">bin_scales</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">total_bin_content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">bin_scales</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
@@ -530,30 +575,30 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                                                     <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="k">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+                                                     <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s">&#39;calc&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s">&#39;norm&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s1">&#39;calc&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s1">&#39;norm&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">rescale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="k">True</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot scale before histogramming&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot scale before histogramming&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s">&#39;calc&#39;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s">&#39;scale&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">exist</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">normed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s1">&#39;calc&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s1">&#39;scale&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">exist</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">normed</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="n">scale</span> <span class="o">==</span> <span class="s">&#39;binwidth&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">scale</span> <span class="o">==</span> <span class="s1">&#39;binwidth&#39;</span><span class="p">:</span>
             <span class="n">widths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">widths</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s">&#39;calc&#39;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s">&#39;scale&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="o">/</span><span class="n">widths</span><span class="p">,</span> <span class="n">exist</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">normed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorbars</span> <span class="o">==</span> <span class="s1">&#39;calc&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">calc_bin_error</span><span class="p">(</span><span class="n">hist_mod</span><span class="o">=</span><span class="s1">&#39;scale&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="o">/</span><span class="n">widths</span><span class="p">,</span> <span class="n">exist</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">normed</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">calc_bin_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist_mod</span><span class="o">=</span><span class="s">&#39;default&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">exist</span><span class="o">=</span><span class="k">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">calc_bin_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist_mod</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exist</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
-        <span class="c"># make new error bars if they haven&#39;t been calc&#39;d</span>
+        <span class="c1"># make new error bars if they haven&#39;t been calc&#39;d</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">exist</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
@@ -564,9 +609,9 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
                     <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
-                <span class="n">weights</span> <span class="o">=</span> <span class="k">None</span>
+                <span class="n">weights</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="k">None</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">]</span>
+                <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">]</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
                 <span class="n">bin_content_no_norm</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
@@ -577,48 +622,52 @@
                     <span class="n">bin_content_no_norm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                                                             <span class="nb">range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_range</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;gaussian&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
                 <span class="n">bin_err_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">bin_content_no_norm</span><span class="p">)</span>
-                <span class="c"># bin_err_tmp = np.sqrt(self.bin_content)</span>
+                <span class="c1"># bin_err_tmp = np.sqrt(self.bin_content)</span>
 
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;sumW2&#39;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;sumW2&#39;</span><span class="p">:</span>
                 <span class="n">bin_err_tmp</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
-                    <span class="n">df_list_tmp</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="k">True</span><span class="p">)]</span>
+                    <span class="n">df_list_tmp</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df_list</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">df_list_tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_list</span>
 
                 <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">df_list_tmp</span><span class="p">:</span>
-                    <span class="n">df</span><span class="p">[</span><span class="s">&#39;weights2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>
+                    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;weights2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>
                     <span class="n">bin_err_tmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span>
-                        <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s">&#39;bins&#39;</span><span class="p">)[</span><span class="s">&#39;weights2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
+                        <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;bins&#39;</span><span class="p">)[</span><span class="s1">&#39;weights2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
 
                 <span class="n">bin_err_tmp</span> <span class="o">=</span> <span class="n">bin_err_tmp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;poisson&#39;</span><span class="p">:</span>
-                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;poisson&#39;</span><span class="p">:</span>
+                <span class="n">err_low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">poisson_error</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;suppress_zero&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span>
+                                      <span class="n">bin_content_no_norm</span><span class="p">])</span>
+                <span class="n">err_hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">poisson_error</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;suppress_zero&#39;</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span>
+                                     <span class="n">bin_content_no_norm</span><span class="p">])</span>
+                <span class="n">bin_err_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">err_low</span><span class="p">,</span> <span class="n">err_hi</span><span class="p">])</span>
 
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;`err_type: {}` not implemented&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_type&#39;</span><span class="p">]))</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;`err_type: </span><span class="si">{}</span><span class="s1">` not implemented&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_type&#39;</span><span class="p">]))</span>
 
-            <span class="c"># Modifiy the error bars if needed (due to normalization or scaling)</span>
-            <span class="k">if</span> <span class="n">hist_mod</span> <span class="o">==</span> <span class="s">&#39;default&#39;</span><span class="p">:</span>
+            <span class="c1"># Modifiy the error bars if needed (due to normalization or scaling)</span>
+            <span class="k">if</span> <span class="n">hist_mod</span> <span class="o">==</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bin_err</span> <span class="o">=</span> <span class="n">bin_err_tmp</span>
 
-            <span class="k">elif</span> <span class="n">hist_mod</span> <span class="o">==</span> <span class="s">&#39;norm&#39;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">hist_mod</span> <span class="o">==</span> <span class="s1">&#39;norm&#39;</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
                     <span class="n">bc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">bc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bin_err</span> <span class="o">=</span> <span class="n">bin_err_tmp</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">bc</span><span class="p">,</span> <span class="n">bin_content_no_norm</span><span class="p">))</span>
 
-            <span class="k">elif</span> <span class="n">hist_mod</span> <span class="o">==</span> <span class="s">&#39;scale&#39;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">hist_mod</span> <span class="o">==</span> <span class="s1">&#39;scale&#39;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bin_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">bin_err_tmp</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
 
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;`hist_mod: {}` not implemented&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hist_mod</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;`hist_mod: </span><span class="si">{}</span><span class="s1">` not implemented&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hist_mod</span><span class="p">))</span>
 
-        <span class="c"># if errors already exist due to norm calc</span>
+        <span class="c1"># if errors already exist due to norm calc</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bin_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_err</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
 
@@ -626,7 +675,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">bin_height</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">]</span>
             <span class="n">bin_err</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_err</span><span class="p">]</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">!=</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">!=</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
                 <span class="n">vis_object</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">vis_object</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">vis_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis_object</span>
@@ -644,43 +693,49 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">n_data_sets_eff</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_data_sets_eff</span><span class="p">):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;auto&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
                     <span class="n">err_color</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">to_rgba</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">_get_rgba_face</span><span class="p">())</span>
-                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="s">&#39;bar&#39;</span><span class="p">]:</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">]:</span>
                     <span class="n">err_color</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">to_rgba</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_facecolor</span><span class="p">())</span>
-                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;step&#39;</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span>
                     <span class="n">err_color</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">to_rgba</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_edgecolor</span><span class="p">())</span>
 
                 <span class="n">hls_tmp</span> <span class="o">=</span> <span class="n">colorsys</span><span class="o">.</span><span class="n">rgb_to_hls</span><span class="p">(</span><span class="o">*</span><span class="n">err_color</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                 <span class="n">err_color</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">hls_to_rgb</span><span class="p">(</span><span class="n">hls_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">hls_tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">hls_tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span> <span class="o">+</span> \
                     <span class="p">[</span><span class="n">err_color</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;auto&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
-                <span class="n">err_color</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">_get_lines</span><span class="o">.</span><span class="n">prop_cycler</span><span class="p">)[</span><span class="s">&#39;color&#39;</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_color&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+                <span class="n">err_color</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">_get_lines</span><span class="o">.</span><span class="n">prop_cycler</span><span class="p">)[</span><span class="s1">&#39;color&#39;</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">err_color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_color&#39;</span><span class="p">]</span>
+                <span class="n">err_color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_color&#39;</span><span class="p">]</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
-                <span class="n">_</span><span class="p">,</span> <span class="n">caps</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">bin_height</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
-                                              <span class="n">marker</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">bin_err</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">widths</span><span class="o">*</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">caps</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">bin_height</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                                              <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">bin_err</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">widths</span><span class="o">*</span><span class="mf">0.5</span><span class="p">,</span>
                                               <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">err_color</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;line&#39;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">bin_height</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;line&#39;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">bin_height</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
                                      <span class="n">yerr</span><span class="o">=</span><span class="n">bin_err</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">err_color</span><span class="p">)</span>
 
-                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;band&#39;</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dict</span><span class="p">[</span><span class="s1">&#39;err_style&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;band&#39;</span><span class="p">:</span>
                     <span class="n">fill_between_steps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">bin_height</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">bin_err</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                                       <span class="n">bin_height</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">bin_err</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">step_where</span><span class="o">=</span><span class="s">&#39;pre&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                                       <span class="n">color</span><span class="o">=</span><span class="n">err_color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">]</span><span class="o">*</span><span class="mf">0.8</span><span class="p">,</span>
+                                       <span class="n">bin_height</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">bin_err</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">step_where</span><span class="o">=</span><span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                       <span class="n">color</span><span class="o">=</span><span class="n">err_color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_dict</span><span class="p">[</span><span class="s1">&#39;alpha&#39;</span><span class="p">]</span><span class="o">*</span><span class="mf">0.8</span><span class="p">,</span>
                                        <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+                        <span class="n">poly_patch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis_object</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_xy</span><span class="p">()</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">poly_patch</span><span class="p">[:(</span><span class="nb">len</span><span class="p">(</span><span class="n">poly_patch</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">],</span> <span class="n">closed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                          <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                                                  <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">redraw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bc_scales</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content_orig</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="k">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_redraw</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_data_sets</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">bin_content</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span><span class="p">]</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">!=</span> <span class="s">&#39;marker&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">!=</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span>
                 <span class="n">vis_object</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">vis_object</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">bin_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_content</span>
@@ -694,35 +749,45 @@
                     <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="n">bcs</span>
                     <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="n">bcs</span>
                     <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;step&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span>
                     <span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_scales</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
                     <span class="n">xy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_scales</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;bar&#39;</span><span class="p">,</span> <span class="s">&#39;stepfilled&#39;</span><span class="p">]:</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="s1">&#39;stepfilled&#39;</span><span class="p">]:</span>
                     <span class="k">for</span> <span class="n">bcs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bc_scales</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
                         <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="n">bcs</span>
                         <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="n">bcs</span>
                         <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
                     <span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">xy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;xy&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;xy&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="p">)</span>
 
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;bar&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;bar&#39;</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bin_content</span><span class="p">[</span><span class="n">n</span><span class="p">]):</span>
-                        <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="s">&#39;height&#39;</span><span class="p">,</span> <span class="n">bc</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;stepfilled&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s">&#39;step&#39;</span><span class="p">:</span>
+                        <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="s1">&#39;height&#39;</span><span class="p">,</span> <span class="n">bc</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;stepfilled&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">histtype</span> <span class="o">==</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span>
                     <span class="n">xy</span> <span class="o">=</span> <span class="n">vis_object</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_xy</span><span class="p">()</span>
                     <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
                     <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bin_content</span><span class="p">[</span><span class="n">n</span><span class="p">]:</span>
                         <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">bc</span>
                         <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">bc</span>
                         <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
-                    <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;xy&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logy</span><span class="p">:</span>
+                        <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="mf">0.1</span>
+                        <span class="c1"># xy[0, 1] = min_val</span>
+                        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+                        <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">bin_content</span><span class="p">[</span><span class="n">n</span><span class="p">]:</span>
+                            <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_val</span>
+                            <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_val</span>
+                            <span class="n">j</span> <span class="o">-=</span> <span class="mi">2</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">vis_object</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;xy&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">relim</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">(</span><span class="k">False</span><span class="p">,</span> <span class="k">False</span><span class="p">,</span> <span class="k">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logy</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
 
 
-<span class="k">def</span> <span class="nf">poisson_error</span><span class="p">(</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">suppress_zero</span><span class="o">=</span><span class="k">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">poisson_error</span><span class="p">(</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">suppress_zero</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Returns a high and low 1-sigma error bar for an input bin value, as defined in:</span>
 <span class="sd">    https://www-cdf.fnal.gov/physics/statistics/notes/pois_eb.txt</span>
 <span class="sd">    If bin_content &gt; 9, returns the sqrt(bin_content)&#39;&#39;&#39;</span>
@@ -744,8 +809,121 @@
         <span class="k">return</span> <span class="n">error_dict</span><span class="p">[</span><span class="n">bin_content</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">bin_content</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">bin_content</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">ratio_plot</span><span class="p">(</span><span class="n">hist_dict1</span><span class="p">,</span> <span class="n">hist_dict2</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ratio_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">err_style</span><span class="o">=</span><span class="s1">&#39;band&#39;</span><span class="p">,</span>
+               <span class="n">err_color</span><span class="o">=</span><span class="s1">&#39;xkcd:gunmetal&#39;</span><span class="p">,</span> <span class="n">ratio_mode</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">unity_line</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span>
+               <span class="n">logx</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function for creating ratio plots (comparing two histograms by dividing their bin content).</span>
+<span class="sd">    The call structure is very similar to producing two individual histograms, with additional</span>
+<span class="sd">    arguments specifying the nature of the ratio plot.  The number of bins and ranges for both</span>
+<span class="sd">    histograms must be equal.&#39;&#39;&#39;</span>
+
+    <span class="n">bin_range</span> <span class="o">=</span> <span class="nb">range</span>
+    <span class="k">del</span> <span class="nb">range</span>
+
+    <span class="n">bins</span><span class="p">,</span> <span class="n">bin_range</span> <span class="o">=</span> <span class="n">_check_args_ratio</span><span class="p">(</span><span class="n">hist_dict1</span><span class="p">,</span> <span class="n">hist_dict2</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">bin_range</span><span class="p">)</span>
+    <span class="n">hist_dict1</span><span class="p">[</span><span class="s1">&#39;bins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bins</span>
+    <span class="n">hist_dict1</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bin_range</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">logx</span><span class="p">:</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">nonposy</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sharex</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
+    <span class="c1"># ax1.grid(True)</span>
+    <span class="c1"># ax2.grid(True)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax1</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+
+    <span class="n">hist_dict1</span><span class="p">[</span><span class="s1">&#39;ax&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ax1</span>
+    <span class="n">hist_dict2</span><span class="p">[</span><span class="s1">&#39;ax&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ax1</span>
+
+    <span class="n">hist_con1</span> <span class="o">=</span> <span class="n">HistContainer</span><span class="p">(</span><span class="o">**</span><span class="n">hist_dict1</span><span class="p">)</span>
+    <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_edges</span>
+    <span class="n">bin_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bin_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">hist_dict2</span><span class="p">[</span><span class="s1">&#39;bins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bin_edges</span>
+    <span class="n">hist_dict2</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bin_range</span>
+    <span class="n">hist_con2</span> <span class="o">=</span> <span class="n">HistContainer</span><span class="p">(</span><span class="o">**</span><span class="n">hist_dict2</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">bin_range</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">hist_con1</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+        <span class="n">bc1</span> <span class="o">=</span> <span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bc1</span> <span class="o">=</span> <span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_content</span>
+    <span class="k">if</span> <span class="n">hist_con2</span><span class="o">.</span><span class="n">stacked</span><span class="p">:</span>
+        <span class="n">bc2</span> <span class="o">=</span> <span class="n">hist_con2</span><span class="o">.</span><span class="n">bin_content</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bc2</span> <span class="o">=</span> <span class="n">hist_con2</span><span class="o">.</span><span class="n">bin_content</span>
+
+    <span class="n">berr1</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">hist_con1</span><span class="p">,</span> <span class="s1">&#39;bin_err&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bc1</span><span class="p">)))</span>
+    <span class="n">berr2</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">hist_con2</span><span class="p">,</span> <span class="s1">&#39;bin_err&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bc2</span><span class="p">)))</span>
+
+    <span class="n">ratio</span> <span class="o">=</span> <span class="n">bc1</span><span class="o">/</span><span class="n">bc2</span>
+    <span class="n">ratio_err</span> <span class="o">=</span> <span class="n">ratio</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">berr1</span><span class="o">/</span><span class="n">bc1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">berr2</span><span class="o">/</span><span class="n">bc2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ratio_err_hi</span> <span class="o">=</span> <span class="n">ratio</span> <span class="o">+</span> <span class="n">ratio_err</span>
+    <span class="n">ratio_err_low</span> <span class="o">=</span> <span class="n">ratio</span> <span class="o">-</span> <span class="n">ratio_err</span>
+
+    <span class="n">ratio</span><span class="p">[</span><span class="n">ratio</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">fill_between_steps</span><span class="p">(</span><span class="n">ax2</span><span class="p">,</span> <span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">ratio_err_hi</span><span class="p">,</span> <span class="n">ratio_err_low</span><span class="p">,</span>
+                       <span class="n">step_where</span><span class="o">=</span><span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">err_color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="n">ax2</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_centers</span><span class="p">,</span> <span class="n">ratio</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">xerr</span><span class="o">=</span><span class="p">[</span><span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_centers</span><span class="o">-</span><span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                       <span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">-</span><span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_centers</span><span class="p">],</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span>
+                 <span class="n">color</span><span class="o">=</span><span class="s1">&#39;xkcd:gunmetal&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">unity_line</span><span class="p">:</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">unity_line</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">prune</span><span class="o">=</span><span class="s1">&#39;upper&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">ratio_range</span><span class="p">:</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ratio_range</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">),</span> <span class="p">(</span><span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">hist_con1</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">hist_con1</span><span class="o">.</span><span class="n">vis_object</span><span class="p">),</span> \
+        <span class="p">(</span><span class="n">hist_con2</span><span class="o">.</span><span class="n">bin_content</span><span class="p">,</span> <span class="n">hist_con2</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">hist_con2</span><span class="o">.</span><span class="n">vis_object</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_args_ratio</span><span class="p">(</span><span class="n">hist_dict1</span><span class="p">,</span> <span class="n">hist_dict2</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">bin_range</span><span class="p">):</span>
+
+    <span class="c1"># check that &#39;bins&#39; is not conflicting</span>
+    <span class="k">if</span> <span class="n">bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_bins</span> <span class="o">=</span> <span class="n">bins</span>
+    <span class="k">elif</span> <span class="s1">&#39;bins&#39;</span> <span class="ow">in</span> <span class="n">hist_dict1</span><span class="p">:</span>
+        <span class="n">_bins</span> <span class="o">=</span> <span class="n">hist_dict1</span><span class="p">[</span><span class="s1">&#39;bins&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="s1">&#39;bins&#39;</span> <span class="ow">in</span> <span class="n">hist_dict2</span><span class="p">:</span>
+        <span class="n">_bins</span> <span class="o">=</span> <span class="n">hist_dict2</span><span class="p">[</span><span class="s1">&#39;bins&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_bins</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span>
+
+    <span class="k">if</span> <span class="p">((</span><span class="s1">&#39;bins&#39;</span> <span class="ow">in</span> <span class="n">hist_dict1</span> <span class="ow">and</span> <span class="n">hist_dict1</span><span class="p">[</span><span class="s1">&#39;bins&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">_bins</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="s1">&#39;bins&#39;</span> <span class="ow">in</span> <span class="n">hist_dict2</span> <span class="ow">and</span> <span class="n">hist_dict2</span><span class="p">[</span><span class="s1">&#39;bins&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">_bins</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;`bins` arg is inconsistent.  All declared `bins` args must be equal&#39;</span><span class="p">)</span>
+
+    <span class="c1"># check that &#39;range&#39; is not conflicting</span>
+
+    <span class="k">if</span> <span class="n">bin_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_bin_range</span> <span class="o">=</span> <span class="n">bin_range</span>
+    <span class="k">elif</span> <span class="s1">&#39;range&#39;</span> <span class="ow">in</span> <span class="n">hist_dict1</span><span class="p">:</span>
+        <span class="n">_bin_range</span> <span class="o">=</span> <span class="n">hist_dict1</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="s1">&#39;range&#39;</span> <span class="ow">in</span> <span class="n">hist_dict2</span><span class="p">:</span>
+        <span class="n">_bin_range</span> <span class="o">=</span> <span class="n">hist_dict2</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_bin_range</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="p">((</span><span class="s1">&#39;range&#39;</span> <span class="ow">in</span> <span class="n">hist_dict1</span> <span class="ow">and</span> <span class="n">hist_dict1</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">_bin_range</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="s1">&#39;range&#39;</span> <span class="ow">in</span> <span class="n">hist_dict2</span> <span class="ow">and</span> <span class="n">hist_dict2</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">_bin_range</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;`range` arg is inconsistent.  All declared `range` args must be equal&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_bins</span><span class="p">,</span> <span class="n">_bin_range</span>
 </pre></div>
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
@@ -780,13 +958,14 @@
             VERSION:'0.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="../../_static/jquery.js"></script>
       <script type="text/javascript" src="../../_static/underscore.js"></script>
       <script type="text/javascript" src="../../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Simple Example &mdash; histogram_plus 0.1 documentation</title>
+  <title>Error Bars &mdash; histogram_plus 0.1 documentation</title>
   
 
   
@@ -38,8 +38,7 @@
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="histogram_plus 0.1 documentation" href="../index.html"/>
-        <link rel="next" title="Features" href="../features.html"/>
-        <link rel="prev" title="histogram_plus: More features, just as easy to use." href="../index.html"/> 
+        <link rel="prev" title="Features" href="../features.html"/> 
 
   
   <script src="js/modernizr.min.js"></script>
@@ -93,9 +92,9 @@
             
             
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Simple Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hist_example.html">Simple Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
-<li class="toctree-l1"><a class="reference internal" href="errorbars.html">Error Bars</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Error Bars</a></li>
 </ul>
 
             
@@ -140,13 +139,13 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-      <li>Simple Example</li>
+      <li>Error Bars</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/_static/hist_example.ipynb.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/_static/errorbars.ipynb.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -353,9 +352,20 @@ div.nboutput div.output_area.stderr {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
 </style>
-<div class="section" id="Simple-Example">
-<h1>Simple Example<a class="headerlink" href="#Simple-Example" title="Permalink to this headline">¶</a></h1>
-<div class="nbinput docutils container">
+<div class="section" id="Error-Bars">
+<h1>Error Bars<a class="headerlink" href="#Error-Bars" title="Permalink to this headline">¶</a></h1>
+<p>It is common practice in High Energy Physics (and other fields) to
+display error bars for each histogram bin, corresponding to either the
+associated statistical or systematic errors. While the interpretation
+and meaning of the aforementioned error bars is a point of constant
+contention (<a class="reference external" href="http://www.science20.com/quantum_diaries_survivor/those_deceiving_error_bars-85735">Those Deceiving Error
+Bars</a>),
+the entries in a histogram bin are typically seen as drawn from a
+Poisson distribution, and thus the standard deviation for a bin with
+<span class="math">\(N\)</span> entries is <span class="math">\(\sqrt{N}\)</span>.</p>
+<p>Drawing Error Bars ——————</p>
+<p>Let us produce a simple histogram with error bars.</p>
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [1]:
 </pre></div>
@@ -363,44 +373,85 @@ div.nboutput div.output_area.stderr {
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">histogram_plus</span> <span class="k">import</span> <span class="n">hist</span>
-
 <span class="o">%</span><span class="k">matplotlib</span> inline
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
 
-<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1001</span><span class="p">)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-
-<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Automatic Error Bar Generation&#39;</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s1">&#39;marker&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Marker Draw-style&#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Simple Error Bar Example&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>Out[1]:
+<span></span>Out[2]:
 </pre></div>
 </div>
 <div class="output_area highlight-none"><div class="highlight"><pre>
-<span></span>&lt;matplotlib.text.Text at 0x10b40e1d0&gt;
+<span></span>&lt;matplotlib.text.Text at 0x1165623c8&gt;
 </pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/_static_hist_example_1_1.png" src="../_images/_static_hist_example_1_1.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_static_hist_example_1_2.png" src="../_images/_static_hist_example_1_2.png" />
+<img alt="../_images/_static_errorbars_3_1.png" src="../_images/_static_errorbars_3_1.png" />
+</div>
+</div>
+<p>By default, when no weights are given, the error bars are calculated as
+<span class="math">\(\pm\sqrt{N}\)</span> above and below the bin height. This is equivalent
+to using the argument <code class="docutils literal"><span class="pre">err_type='gaussian'</span></code> when calling the <code class="docutils literal"><span class="pre">hist</span></code>
+function. If weights are included with the input data, then the default
+error bars are calculated as the root of the sum the square of the
+weights. This is equivalent to declaring `err_type=’sumW2’.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Error Bars for Weighted Histogram, SumW2&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">err_type</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Error Bars for Weighted Histogram, sqrt(N)&#39;</span><span class="p">)</span>
+
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>Out[3]:
+</pre></div>
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>&lt;matplotlib.text.Text at 0x116790f98&gt;
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_static_errorbars_5_1.png" src="../_images/_static_errorbars_5_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_static_errorbars_5_2.png" src="../_images/_static_errorbars_5_2.png" />
 </div>
 </div>
 </div>
@@ -415,10 +466,8 @@ div.nboutput div.output_area.stderr {
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../features.html" class="btn btn-neutral float-right" title="Features" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
-      
-        <a href="../index.html" class="btn btn-neutral" title="histogram_plus: More features, just as easy to use." accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../features.html" class="btn btn-neutral" title="Features" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
