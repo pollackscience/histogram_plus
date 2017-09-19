@@ -10,13 +10,19 @@ histogram_plus: More features, just as easy to use.
 package adds additional needed features, such as automatic error bar calculation and display, the
 ability to use markers for visualization, and the Bayesian Blocks data-driven binning method.
 
+Install this package via `pip`:
+``pip install histogram_plus``
+or download the latest version at https://github.com/brovercleveland/histogram_plus.
+
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
    _static/hist_example.ipynb
-   hist
+   features
+   _static/errorbars.ipynb
 
 
 

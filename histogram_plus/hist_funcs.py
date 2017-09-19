@@ -263,7 +263,7 @@ class HistContainer(object):
             if 'edgecolor' not in kwargs:
                 kwargs['edgecolor'] = 'k'
             if 'linewidth' not in kwargs:
-                kwargs['linewidth'] = 2
+                kwargs['linewidth'] = 1
 
         # For data-driven binning
         self.bin_dict = {}
@@ -285,7 +285,10 @@ class HistContainer(object):
                 self.hist_dict['linestyle'] = ''
 
         if 'alpha' not in self.hist_dict:
-            self.hist_dict['alpha'] = 0.5
+            if self.histtype == 'marker':
+                self.hist_dict['alpha'] = 1
+            else:
+                self.hist_dict['alpha'] = 0.5
 
         if 'linewidth' not in self.hist_dict and self.histtype == 'step':
             self.hist_dict['linewidth'] = 2
