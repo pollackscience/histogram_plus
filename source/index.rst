@@ -25,6 +25,7 @@ Contents:
    _static/errorbars.ipynb
    blocks
    _static/ratio.ipynb
+   hist
 
 
 
