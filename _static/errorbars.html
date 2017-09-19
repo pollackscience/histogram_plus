@@ -38,6 +38,7 @@
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="histogram_plus 0.1 documentation" href="../index.html"/>
+        <link rel="next" title="Bayesian Blocks" href="../blocks.html"/>
         <link rel="prev" title="Features" href="../features.html"/> 
 
   
@@ -94,7 +95,15 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="hist_example.html">Simple Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Error Bars</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Error Bars</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Error-Bar-Calculation">Error Bar Calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Error-Bar-Display">Error Bar Display</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Stacked-Histograms">Stacked Histograms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Scale-and-Normalization">Scale and Normalization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../blocks.html">Bayesian Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ratio.html">Ratio Plots</a></li>
 </ul>
 
             
@@ -363,7 +372,8 @@ Bars</a>),
 the entries in a histogram bin are typically seen as drawn from a
 Poisson distribution, and thus the standard deviation for a bin with
 <span class="math">\(N\)</span> entries is <span class="math">\(\sqrt{N}\)</span>.</p>
-<p>Drawing Error Bars ——————</p>
+<div class="section" id="Error-Bar-Calculation">
+<h2>Error Bar Calculation<a class="headerlink" href="#Error-Bar-Calculation" title="Permalink to this headline">¶</a></h2>
 <p>Let us produce a simple histogram with error bars.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
@@ -376,6 +386,7 @@ Poisson distribution, and thus the standard deviation for a bin with
 <span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
 
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1001</span><span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -397,7 +408,7 @@ Poisson distribution, and thus the standard deviation for a bin with
 </pre></div>
 </div>
 <div class="output_area highlight-none"><div class="highlight"><pre>
-<span></span>&lt;matplotlib.text.Text at 0x1165623c8&gt;
+<span></span>&lt;matplotlib.text.Text at 0x116429400&gt;
 </pre></div>
 </div>
 </div>
@@ -436,7 +447,7 @@ weights. This is equivalent to declaring `err_type=’sumW2’.</p>
 </pre></div>
 </div>
 <div class="output_area highlight-none"><div class="highlight"><pre>
-<span></span>&lt;matplotlib.text.Text at 0x116790f98&gt;
+<span></span>&lt;matplotlib.text.Text at 0x1166ec390&gt;
 </pre></div>
 </div>
 </div>
@@ -455,6 +466,162 @@ weights. This is equivalent to declaring `err_type=’sumW2’.</p>
 </div>
 </div>
 </div>
+<div class="section" id="Error-Bar-Display">
+<h2>Error Bar Display<a class="headerlink" href="#Error-Bar-Display" title="Permalink to this headline">¶</a></h2>
+<p>There are currently two styles for displaying error bars,
+<code class="docutils literal"><span class="pre">err_style='band'</span></code> and <code class="docutils literal"><span class="pre">err_style='line'</span></code>. By default, the <code class="docutils literal"><span class="pre">band</span></code>
+style is used for filled histograms, while the <code class="docutils literal"><span class="pre">line</span></code> style is used
+for step and marker histograms.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">data2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">data3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s1">&#39;step&#39;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data3</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s1">&#39;marker&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Various Histogram and Error Bar Draw Styles&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>Out[4]:
+</pre></div>
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>&lt;matplotlib.text.Text at 0x1168e8198&gt;
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_static_errorbars_8_1.png" src="../_images/_static_errorbars_8_1.png" />
+</div>
+</div>
+<p>Error bar color is handled automatically by default
+(<code class="docutils literal"><span class="pre">err_color='auto'</span></code>). For a non-stacked histogram, the error bar color
+is selected to be a slightly darker version of the main histogram color.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data3</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;auto color&#39;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;C8&#39;</span><span class="p">,</span> <span class="n">err_color</span><span class="o">=</span><span class="s1">&#39;C9&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;specified color&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Color Options&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>Out[5]:
+</pre></div>
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>&lt;matplotlib.legend.Legend at 0x1168c9320&gt;
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_static_errorbars_10_1.png" src="../_images/_static_errorbars_10_1.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Stacked-Histograms">
+<h2>Stacked Histograms<a class="headerlink" href="#Stacked-Histograms" title="Permalink to this headline">¶</a></h2>
+<p>For stacked histograms, the error bars are determined by the sum of all
+contributions for an individual bin, and placed around the total bin
+height. If the color mode is automatic, the error bar color is chosen to
+be the next in the current color cycle, instead of being a modified
+version of the currently displayed colors.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">([</span><span class="n">data3</span><span class="p">,</span> <span class="n">data2</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Unstacked&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">([</span><span class="n">data3</span><span class="p">,</span> <span class="n">data2</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stacked</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Stacked&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>Out[6]:
+</pre></div>
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>&lt;matplotlib.text.Text at 0x116b8e320&gt;
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_static_errorbars_13_1.png" src="../_images/_static_errorbars_13_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_static_errorbars_13_2.png" src="../_images/_static_errorbars_13_2.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Scale-and-Normalization">
+<h2>Scale and Normalization<a class="headerlink" href="#Scale-and-Normalization" title="Permalink to this headline">¶</a></h2>
+<p>If scale and/or normalization is applied to the histogram, the error
+bars are scaled appropriately as well.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s1">&#39;step&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">hist</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">errorbars</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s1">&#39;step&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Histogram and scaled histogram&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>Out[7]:
+</pre></div>
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>&lt;matplotlib.text.Text at 0x116fb1940&gt;
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_static_errorbars_16_1.png" src="../_images/_static_errorbars_16_1.png" />
+</div>
+</div>
+</div>
+</div>
 
 
            </div>
@@ -465,6 +632,8 @@ weights. This is equivalent to declaring `err_type=’sumW2’.</p>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../blocks.html" class="btn btn-neutral float-right" title="Bayesian Blocks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../features.html" class="btn btn-neutral" title="Features" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
