@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='histogram_plus',
-      version='0.1.1',
+      version='0.2',
       description='Overloaded histogram maker based on mpl',
       long_description='Documentation: https://brovercleveland.github.io/histogram_plus/',
       url='http://github.com/brovercleveland/histogram_plus',
@@ -9,5 +9,6 @@ setup(name='histogram_plus',
       author_email='brianleepollack@gmail.com',
       license='MIT',
       packages=['histogram_plus'],
-      install_requires=[ 'numpy', 'pandas', 'matplotlib'],
+      install_requires=['numpy', 'pandas', 'matplotlib'],
+      keywords=['histogram', 'physics', 'plotting'],
       zip_safe=False)

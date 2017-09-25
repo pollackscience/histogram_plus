@@ -180,6 +180,8 @@ class HistContainer(object):
 
         if self.errorbars:
             self.draw_errorbars()
+        if self.logy:
+            self.set_log_vals()
 
     def _checks_and_wrangling(self, x, w):
         # Manage the input data in the same fashion as mpl
@@ -256,6 +258,10 @@ class HistContainer(object):
             self.err_dict['err_type'] = 'sumW2'
         else:
             self.err_dict['err_type'] = 'gaussian'
+        if 'err_x' in kwargs:
+            self.err_dict['err_x'] = kwargs.pop('err_x')
+        else:
+            self.err_dict['err_x'] = True
 
         # tweak histogram styles for `band` err_style
 
@@ -285,7 +291,7 @@ class HistContainer(object):
                 self.hist_dict['linestyle'] = ''
 
         if 'alpha' not in self.hist_dict:
-            if self.histtype == 'marker':
+            if self.histtype in ['marker', 'step']:
                 self.hist_dict['alpha'] = 1
             else:
                 self.hist_dict['alpha'] = 0.5
@@ -293,13 +299,10 @@ class HistContainer(object):
         if 'linewidth' not in self.hist_dict and self.histtype == 'step':
             self.hist_dict['linewidth'] = 2
 
-        if 'log' in self.hist_dict and self.hist_dict['log'] is True:
-            self.logy = True
+        if 'log' in self.hist_dict:
+            self.logy = self.hist_dict.pop('log')
         else:
             self.logy = False
-        if self.logy and self.histtype == 'marker':
-            self.hist_dict.pop('log')
-            self.ax.set_yscale("log", nonposy='clip')
 
     def _df_binning_init(self, data, weights):
         '''Do an initial binning to get bin edges, total hist range, and break each set of data and
@@ -549,8 +552,12 @@ class HistContainer(object):
                 err_color = self.err_dict['err_color']
 
             if self.histtype == 'marker':
+                if self.err_dict['err_x']:
+                    xerr = self.widths*0.5
+                else:
+                    xerr = None
                 _, caps, _ = self.ax.errorbar(self.bin_centers, bin_height[i], linestyle='',
-                                              marker='', yerr=bin_err[i], xerr=self.widths*0.5,
+                                              marker='', yerr=bin_err[i], xerr=xerr,
                                               linewidth=2, color=err_color)
             else:
                 if self.err_dict['err_style'] == 'line':
@@ -571,6 +578,7 @@ class HistContainer(object):
 
     def redraw(self):
         self.bc_scales = np.divide(self.bin_content, self.bin_content_orig)
+        np.nan_to_num(self.bc_scales[-1], copy=False)
         self.do_redraw = False
         if self.n_data_sets == 1:
             bin_content = [self.bin_content]
@@ -610,20 +618,16 @@ class HistContainer(object):
                         xy[j+1, 1] = bc
                         xy[j+2, 1] = bc
                         j += 2
-                    if self.logy:
-                        min_val = min(xy[:, 1])*0.1
-                        # xy[0, 1] = min_val
-                        j = 0
-                        for bc in bin_content[n]:
-                            xy[j-1, 1] = min_val
-                            xy[j-2, 1] = min_val
-                            j -= 2
                     plt.setp(vis_object[n][0], 'xy', xy)
 
         self.ax.relim()
         self.ax.autoscale_view(False, False, True)
-        if self.logy:
-            self.ax.set_ylim(min_val, self.ax.get_ylim()[1])
+
+    def set_log_vals(self):
+        self.ax.set_yscale('log', nonposy='clip')
+        logbase = self.ax.yaxis._scale.base
+        ymin = np.min(self.bin_content[np.nonzero(self.bin_content)])
+        self.ax.set_ylim(ymin=min(self.ax.get_ylim()[0], ymin/logbase))
 
 
 def poisson_error(bin_content, suppress_zero=False):
