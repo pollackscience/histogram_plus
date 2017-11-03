@@ -6,6 +6,11 @@
 histogram_plus: More features, just as easy to use.
 ===================================================
 
+**This package is now deprecated, and has moved to a new home!  Please checkout out
+`Scikit-HEP <http://www.scikit-hep.org/>`_ for the most up-to-date version of this package,
+along with a host of useful data analysis and visualization tools, aimed at the HEP
+community.**
+
 `histogram_plus` is histogramming package based off of `matplotlib`'s histogram methods.  This
 package adds additional needed features, such as automatic error bar calculation and display, the
 ability to use markers for visualization, and the Bayesian Blocks data-driven binning method.
